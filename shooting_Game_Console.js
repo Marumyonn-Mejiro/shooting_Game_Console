@@ -72,15 +72,16 @@ function gameLoop() {
     });
 
     // **画面外の弾を削除**
-    bullets = bullets.filter((b) => b.y < canvas.height);
+    bullets = bullets.filter((b) => 
+        b.x >= -BULLET_SIZE &&
+        b.x <= canvas.width + BULLET_SIZE &&
+        b.y >= -BULLET_SIZE &&
+        b.y <= canvas.height + BULLET_SIZE
+    );
 
-    // **弾の描画処理（桜の模様を描く）**
-    ctx.fillStyle = "pink";
+    // **弾の描画処理（桜の模様の弾）**
     bullets.forEach((b) => {
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, BULLET_SIZE, 0, Math.PI * 2);
-        ctx.fill();
-
+        drawSakuraBullet(b.x, b.y, BULLET_SIZE);
         // **衝突判定（当たったらゲームオーバー）**
         if (
             b.x < player.x + PLAYER_SIZE &&
@@ -93,7 +94,7 @@ function gameLoop() {
     });
 
     // **高頻度の弾幕発射**
-    if (Math.random() < 0.05) { // 発射頻度アップ
+    if (Math.random() < 0.1) { // 発射確率を上げて高頻度に
         spawnBulletPattern();
     }
 
@@ -104,7 +105,7 @@ function gameLoop() {
 function spawnBulletPattern() {
     let centerX = Math.random() * canvas.width;
     let centerY = 0;
-    let numBullets = 8; // 円形に8発
+    let numBullets = 12; // 弾の数を増やしてタイトな弾幕に
     let angleStep = Math.PI * 2 / numBullets;
 
     for (let i = 0; i < numBullets; i++) {
@@ -112,10 +113,33 @@ function spawnBulletPattern() {
         bullets.push({
             x: centerX,
             y: centerY,
-            dx: Math.cos(angle) * 1.5,
-            dy: Math.sin(angle) * 2 + 1,
+            dx: Math.cos(angle),
+            dy: Math.sin(angle)
         });
     }
+}
+
+// **桜の模様の弾（桜の花びら風）の描画関数**
+function drawSakuraBullet(x, y, size) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = "pink";
+    // 5枚の花びらを描画
+    for (let i = 0; i < 5; i++) {
+        ctx.save();
+        ctx.rotate(i * (Math.PI * 2 / 5));
+        ctx.beginPath();
+        // 花びらを楕円で表現（上方向に伸びる楕円）
+        ctx.ellipse(0, -size, size * 0.4, size, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+    // 中心部分の丸（ハイライト）
+    ctx.beginPath();
+    ctx.fillStyle = "white";
+    ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 }
 
 // **ゲームオーバー処理**
