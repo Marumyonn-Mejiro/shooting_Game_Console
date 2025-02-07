@@ -1,13 +1,9 @@
-// API Gateway のエンドポイント（※この URL を利用します）
-const API_BASE_URL = "https://ktwez6k3fi.execute-api.ap-northeast-1.amazonaws.com";
-
 // DOM 要素の取得
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const scoreDisplay = document.getElementById("scoreDisplay");
 const gameOverText = document.getElementById("gameOverText");
 const restartButton = document.getElementById("restartButton");
-const leaderboardList = document.getElementById("leaderboard");
 
 // 定数
 const PLAYER_SIZE = 10;
@@ -20,8 +16,10 @@ let player, bullets, keys, gameRunning, startTime;
 
 // ★ ゲーム初期化 ★
 function initGame() {
+  // キャンバスの実際の描画領域は画面サイズに合わせて設定
   canvas.width = Math.min(window.innerWidth * 0.9, 600);
   canvas.height = Math.min(window.innerHeight * 0.6, 400);
+  
   player = { x: canvas.width / 2, y: canvas.height - 30 };
   bullets = [];
   keys = {};
@@ -36,10 +34,15 @@ window.addEventListener("resize", initGame);
 initGame();
 
 // ★ キーボード操作 ★
-document.addEventListener("keydown", (e) => keys[e.key] = true);
-document.addEventListener("keyup", (e) => keys[e.key] = false);
+document.addEventListener("keydown", (e) => {
+  keys[e.key] = true;
+});
+document.addEventListener("keyup", (e) => {
+  keys[e.key] = false;
+});
 
-// ★ スマホのスワイプ操作（画面スクロールを防止するため preventDefault） ★
+// ★ スマホのスワイプ操作 ★
+// ページスクロールを防ぐため、touchmove イベント内で preventDefault() を実施
 let touchStartX = 0, touchStartY = 0;
 document.addEventListener("touchstart", (e) => {
   touchStartX = e.touches[0].clientX;
@@ -58,28 +61,30 @@ document.addEventListener("touchmove", (e) => {
 // ★ ゲームループ ★
 function gameLoop() {
   if (!gameRunning) return;
+  
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+  
   // プレイヤー移動処理
   if (keys["ArrowLeft"] || keys["a"]) player.x -= PLAYER_SPEED;
   if (keys["ArrowRight"] || keys["d"]) player.x += PLAYER_SPEED;
   if (keys["ArrowUp"] || keys["w"]) player.y -= PLAYER_SPEED;
   if (keys["ArrowDown"] || keys["s"]) player.y += PLAYER_SPEED;
-
-  // 画面端での制限
+  
+  // 画面外への移動を防止
   player.x = Math.max(0, Math.min(canvas.width - PLAYER_SIZE, player.x));
   player.y = Math.max(0, Math.min(canvas.height - PLAYER_SIZE, player.y));
-
+  
   // プレイヤー描画
   ctx.fillStyle = "blue";
   ctx.fillRect(player.x, player.y, PLAYER_SIZE, PLAYER_SIZE);
-
-  // 弾の更新＆描画
+  
+  // 弾の更新と描画
   bullets.forEach((b) => {
     b.x += b.dx * BULLET_SPEED;
     b.y += b.dy * BULLET_SPEED;
     drawSakuraBullet(b.x, b.y, BULLET_SIZE * 4);
-    // 衝突判定：プレイヤーと弾の当たり判定
+    
+    // 衝突判定：プレイヤーと弾の重なりを検出
     if (
       b.x < player.x + PLAYER_SIZE &&
       b.x + BULLET_SIZE > player.x &&
@@ -89,22 +94,23 @@ function gameLoop() {
       gameOver();
     }
   });
+  // 画面外に出た弾は削除
   bullets = bullets.filter((b) =>
     b.x >= -BULLET_SIZE &&
     b.x <= canvas.width + BULLET_SIZE &&
     b.y >= -BULLET_SIZE &&
     b.y <= canvas.height + BULLET_SIZE
   );
-
+  
   // 高頻度の弾幕発射
   if (Math.random() < 0.1) {
     spawnBulletPattern();
   }
-
-  // 自身のスコア（経過秒数）を更新して表示
+  
+  // 生存時間（スコア）の更新表示
   const elapsedTime = (new Date() - startTime) / 1000;
   scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
-
+  
   requestAnimationFrame(gameLoop);
 }
 
@@ -159,59 +165,13 @@ function drawPetal(size) {
   ctx.fill();
 }
 
-// ★ AWS API 呼び出し部 ★
-
-// スコア送信（POST /submitScore）  
-async function submitScoreAWS(score) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/submitScore`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ score })
-    });
-    if (!response.ok) {
-      console.error("Score submission failed");
-    }
-  } catch (error) {
-    console.error("submitScoreAWS error:", error);
-  }
-}
-
-// ランキング取得（GET /leaderboard）
-async function getLeaderboardAWS() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/leaderboard`);
-    if (response.ok) {
-      const data = await response.json();
-      updateLeaderboardUI(data);
-    } else {
-      console.error("Leaderboard retrieval failed");
-    }
-  } catch (error) {
-    console.error("getLeaderboardAWS error:", error);
-  }
-}
-
-// ランキングリストの更新
-function updateLeaderboardUI(scores) {
-  // ※取得した配列はスコア降順でソート済みと仮定
-  let html = "";
-  scores.forEach((item) => {
-    html += `<li>${parseFloat(item.score).toFixed(2)}秒</li>`;
-  });
-  leaderboardList.innerHTML = html;
-}
-
 // ★ ゲームオーバー処理 ★
-async function gameOver() {
+function gameOver() {
   gameRunning = false;
   gameOverText.style.display = "block";
   restartButton.style.display = "block";
   const elapsedTime = (new Date() - startTime) / 1000;
   scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
-  // AWS にスコア送信後、最新のランキングを取得
-  await submitScoreAWS(elapsedTime);
-  await getLeaderboardAWS();
 }
 
 // ★ 再スタート ★

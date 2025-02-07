@@ -3,48 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>弾除けゲーム - AWS Online Ranking</title>
+  <title>弾除けゲーム</title>
   <style>
+    /* 画面全体の基本設定 */
     body {
       margin: 0;
       padding: 0;
       font-family: Arial, sans-serif;
       background-color: black;
       color: white;
-      /* タッチ操作時のスクロールを防止 */
-      overflow: hidden;
+      overflow: hidden; /* スクロールを無効化 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     h1 {
+      margin-top: 10px;
       font-size: 2rem;
       color: pink;
-      margin: 10px 0;
     }
-    /* ゲーム画面とランキング枠を横並びにするラッパー */
-    #gameWrapper {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 20px;
-      padding: 10px;
+    p {
+      margin: 0 0 10px 0;
+      text-align: center;
+    }
+    /* ゲームエリア（画面サイズに合わせて幅を調整） */
+    #gameArea {
+      width: 90vw;
+      max-width: 600px;
       box-sizing: border-box;
     }
-    /* ゲームエリア */
-    #gameArea {
-      flex: 1;
-      max-width: 600px;
-    }
+    /* キャンバスはゲームエリアの幅に合わせて表示 */
     canvas {
-      border: 2px solid white;
-      background-color: black;
       width: 100%;
-      height: auto;
+      background-color: black;
+      border: 2px solid white;
       display: block;
     }
+    /* スコア表示 */
     #scoreDisplay {
       margin-top: 10px;
       font-size: 1.2rem;
       text-align: center;
     }
+    /* ゲームオーバー時の表示エリア */
     #gameOverContainer {
       text-align: center;
       margin-top: 10px;
@@ -64,48 +65,19 @@
       color: black;
       cursor: pointer;
     }
-    /* ランキング表示エリア */
-    #leaderboardContainer {
-      width: 220px;
-      background: rgba(0, 0, 0, 0.8);
-      border: 1px solid white;
-      padding: 10px;
-      box-sizing: border-box;
-      max-height: 400px;
-      overflow-y: auto;
-    }
-    #leaderboardContainer h3 {
-      margin: 0 0 10px;
-      text-align: center;
-    }
-    #leaderboardContainer ol {
-      padding-left: 20px;
-      margin: 0;
-    }
   </style>
 </head>
 <body>
   <h1>弾除けゲーム</h1>
-  <p style="text-align: center;">PC: WASD / 矢印キーで移動 | スマホ: スワイプで移動（※スクロール無効）</p>
-
-  <!-- ゲーム画面とランキング表示をラップするコンテナ -->
-  <div id="gameWrapper">
-    <!-- ゲームエリア -->
-    <div id="gameArea">
-      <canvas id="gameCanvas"></canvas>
-      <div id="scoreDisplay">Score: 0.00秒</div>
-      <div id="gameOverContainer">
-        <h2 id="gameOverText">Game Over!</h2>
-        <button id="restartButton">もう一度プレイ</button>
-      </div>
-    </div>
-    <!-- ランキング表示エリア -->
-    <div id="leaderboardContainer">
-      <h3>Online Leaderboard</h3>
-      <ol id="leaderboard"></ol>
+  <p>PC: WASD / 矢印キーで移動&nbsp;&nbsp;|&nbsp;&nbsp;スマホ: スワイプで移動（スクロール無効）</p>
+  <div id="gameArea">
+    <canvas id="gameCanvas"></canvas>
+    <div id="scoreDisplay">Score: 0.00秒</div>
+    <div id="gameOverContainer">
+      <h2 id="gameOverText">Game Over!</h2>
+      <button id="restartButton">もう一度プレイ</button>
     </div>
   </div>
-
   <!-- ゲームロジック（モジュール方式） -->
   <script type="module" src="shooting_Game_Console.js"></script>
 </body>
