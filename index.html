@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>弾除けゲーム</title>
+  <title>弾除けゲーム - AWS Online Ranking</title>
   <style>
     body {
       margin: 0;
@@ -86,7 +86,7 @@
 </head>
 <body>
   <h1>弾除けゲーム</h1>
-  <p style="text-align: center;">PC: WASD / 矢印キーで移動 &nbsp;&nbsp;|&nbsp;&nbsp; スマホ: スワイプで移動（※画面スクロールは無効化）</p>
+  <p style="text-align: center;">PC: WASD / 矢印キーで移動 | スマホ: スワイプで移動（※スクロール無効）</p>
 
   <!-- ゲーム画面とランキング表示をラップするコンテナ -->
   <div id="gameWrapper">
@@ -101,12 +101,12 @@
     </div>
     <!-- ランキング表示エリア -->
     <div id="leaderboardContainer">
-      <h3>Local Leaderboard</h3>
+      <h3>Online Leaderboard</h3>
       <ol id="leaderboard"></ol>
     </div>
   </div>
 
-  <!-- shooting_Game_Console.js をモジュールとして読み込み -->
+  <!-- ゲームロジック（モジュール方式） -->
   <script type="module" src="shooting_Game_Console.js"></script>
 </body>
 </html>

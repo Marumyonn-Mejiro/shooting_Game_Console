@@ -1,4 +1,5 @@
-// ※ Firebase などのオンライン集計は行わず、ローカル配列でスコアを集計します
+// API Gateway のエンドポイント（※この URL を利用します）
+const API_BASE_URL = "https://ktwez6k3fi.execute-api.ap-northeast-1.amazonaws.com";
 
 // DOM 要素の取得
 const canvas = document.getElementById("gameCanvas");
@@ -17,44 +18,35 @@ const PLAYER_SPEED = 4;
 // ゲーム関連の変数
 let player, bullets, keys, gameRunning, startTime;
 
-// この配列に各ゲームセッションのスコア（経過秒数）を記録します
-let localScores = [];
-
-// **ゲーム初期化**
+// ★ ゲーム初期化 ★
 function initGame() {
-  // キャンバスサイズの設定
   canvas.width = Math.min(window.innerWidth * 0.9, 600);
   canvas.height = Math.min(window.innerHeight * 0.6, 400);
-  
-  // ゲーム内初期設定
   player = { x: canvas.width / 2, y: canvas.height - 30 };
   bullets = [];
   keys = {};
   gameRunning = true;
   gameOverText.style.display = "none";
   restartButton.style.display = "none";
-  
-  // ランキングエリアは初期化しない（過去のスコアは保持）
-  
-  startTime = new Date(); // ゲーム開始時刻を記録
+  startTime = new Date();
   scoreDisplay.textContent = "Score: 0.00秒";
   gameLoop();
 }
 window.addEventListener("resize", initGame);
 initGame();
 
-// **キーボード操作**
+// ★ キーボード操作 ★
 document.addEventListener("keydown", (e) => keys[e.key] = true);
 document.addEventListener("keyup", (e) => keys[e.key] = false);
 
-// **スマホのスワイプ操作（スクロール防止のため preventDefault を実施）**
+// ★ スマホのスワイプ操作（画面スクロールを防止するため preventDefault） ★
 let touchStartX = 0, touchStartY = 0;
 document.addEventListener("touchstart", (e) => {
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
 });
 document.addEventListener("touchmove", (e) => {
-  e.preventDefault(); // ページ全体のスクロールを防止
+  e.preventDefault();
   let dx = e.touches[0].clientX - touchStartX;
   let dy = e.touches[0].clientY - touchStartY;
   touchStartX = e.touches[0].clientX;
@@ -63,10 +55,9 @@ document.addEventListener("touchmove", (e) => {
   player.y += dy * 0.2;
 }, { passive: false });
 
-// **ゲームループ**
+// ★ ゲームループ ★
 function gameLoop() {
   if (!gameRunning) return;
-
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // プレイヤー移動処理
@@ -83,24 +74,12 @@ function gameLoop() {
   ctx.fillStyle = "blue";
   ctx.fillRect(player.x, player.y, PLAYER_SIZE, PLAYER_SIZE);
 
-  // 弾の更新処理
+  // 弾の更新＆描画
   bullets.forEach((b) => {
     b.x += b.dx * BULLET_SPEED;
     b.y += b.dy * BULLET_SPEED;
-  });
-
-  // 画面外の弾を削除
-  bullets = bullets.filter((b) =>
-    b.x >= -BULLET_SIZE &&
-    b.x <= canvas.width + BULLET_SIZE &&
-    b.y >= -BULLET_SIZE &&
-    b.y <= canvas.height + BULLET_SIZE
-  );
-
-  // 弾の描画処理（タイトな桜の花びらの弾）
-  bullets.forEach((b) => {
     drawSakuraBullet(b.x, b.y, BULLET_SIZE * 4);
-    // 衝突判定：プレイヤーと弾が接触したらゲームオーバー
+    // 衝突判定：プレイヤーと弾の当たり判定
     if (
       b.x < player.x + PLAYER_SIZE &&
       b.x + BULLET_SIZE > player.x &&
@@ -110,26 +89,31 @@ function gameLoop() {
       gameOver();
     }
   });
+  bullets = bullets.filter((b) =>
+    b.x >= -BULLET_SIZE &&
+    b.x <= canvas.width + BULLET_SIZE &&
+    b.y >= -BULLET_SIZE &&
+    b.y <= canvas.height + BULLET_SIZE
+  );
 
   // 高頻度の弾幕発射
   if (Math.random() < 0.1) {
     spawnBulletPattern();
   }
 
-  // 自身のスコア（経過秒数）の更新表示
+  // 自身のスコア（経過秒数）を更新して表示
   const elapsedTime = (new Date() - startTime) / 1000;
   scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
 
   requestAnimationFrame(gameLoop);
 }
 
-// **桜の花びらを描く弾幕発射**
+// ★ 弾幕発射（桜の花びらパターン） ★
 function spawnBulletPattern() {
   let centerX = Math.random() * canvas.width;
   let centerY = 0;
-  let numBullets = 12; // 弾の数を増やしてタイトな弾幕に
+  let numBullets = 12;
   let angleStep = Math.PI * 2 / numBullets;
-
   for (let i = 0; i < numBullets; i++) {
     let angle = i * angleStep;
     bullets.push({
@@ -141,20 +125,16 @@ function spawnBulletPattern() {
   }
 }
 
-// ======================================================
-// 桜の花の弾（描画関数群：タイトなバージョン）
-// ======================================================
+// ★ 桜の花びら描画関数 ★
 function drawSakuraBullet(x, y, size) {
   ctx.save();
   ctx.translate(x, y);
-  // 5枚の花びらを放射状に描画
   for (let i = 0; i < 5; i++) {
     ctx.save();
     ctx.rotate((i * 2 * Math.PI) / 5);
     drawPetal(size);
     ctx.restore();
   }
-  // 中心部分（ハイライト）の描画
   ctx.beginPath();
   ctx.fillStyle = "rgba(255,255,255,0.9)";
   ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
@@ -179,37 +159,60 @@ function drawPetal(size) {
   ctx.fill();
 }
 
-// ======================================================
-// ローカルランキング用関数（自身のページ内でのスコア集計）
-// ======================================================
+// ★ AWS API 呼び出し部 ★
 
-/**
- * 今回のスコアを localScores 配列に追加し、ランキング（上位10件）を更新して表示する
- * @param {number} score - ゲームセッションの経過秒数
- */
-function updateLocalLeaderboard(score) {
-  localScores.push(score);
-  // 降順（長生存＝高得点）に並べ替え
-  const sortedScores = localScores.slice().sort((a, b) => b - a);
+// スコア送信（POST /submitScore）  
+async function submitScoreAWS(score) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/submitScore`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ score })
+    });
+    if (!response.ok) {
+      console.error("Score submission failed");
+    }
+  } catch (error) {
+    console.error("submitScoreAWS error:", error);
+  }
+}
+
+// ランキング取得（GET /leaderboard）
+async function getLeaderboardAWS() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/leaderboard`);
+    if (response.ok) {
+      const data = await response.json();
+      updateLeaderboardUI(data);
+    } else {
+      console.error("Leaderboard retrieval failed");
+    }
+  } catch (error) {
+    console.error("getLeaderboardAWS error:", error);
+  }
+}
+
+// ランキングリストの更新
+function updateLeaderboardUI(scores) {
+  // ※取得した配列はスコア降順でソート済みと仮定
   let html = "";
-  sortedScores.slice(0, 10).forEach((s) => {
-    html += `<li>${s.toFixed(2)}秒</li>`;
+  scores.forEach((item) => {
+    html += `<li>${parseFloat(item.score).toFixed(2)}秒</li>`;
   });
   leaderboardList.innerHTML = html;
 }
 
-// ======================================================
-// ゲームオーバー処理（スコア記録＋ランキング更新）
-// ======================================================
-function gameOver() {
+// ★ ゲームオーバー処理 ★
+async function gameOver() {
   gameRunning = false;
   gameOverText.style.display = "block";
   restartButton.style.display = "block";
-
   const elapsedTime = (new Date() - startTime) / 1000;
   scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
-  updateLocalLeaderboard(elapsedTime);
+  // AWS にスコア送信後、最新のランキングを取得
+  await submitScoreAWS(elapsedTime);
+  await getLeaderboardAWS();
 }
 
-// **再スタート**
+// ★ 再スタート ★
 restartButton.addEventListener("click", initGame);
