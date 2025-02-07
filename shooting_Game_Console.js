@@ -30,9 +30,11 @@ function initGame() {
   gameRunning = true;
   gameOverText.style.display = "none";
   restartButton.style.display = "none";
-  leaderboardDiv.innerHTML = "";  // ランキング表示エリアをクリア
+  // ランキング表示エリアを初期化（既存のスコアはそのまま）
+  leaderboardDiv.innerHTML = localScores.length
+    ? generateLeaderboardHTML(localScores)
+    : "<p>まだスコアはありません。</p>";
   startTime = new Date(); // ゲーム開始時刻を記録
-  // スコア表示の初期化
   scoreDisplay.textContent = "Score: 0.00秒";
   gameLoop();
 }
@@ -55,7 +57,6 @@ document.addEventListener("touchmove", (e) => {
   let dy = e.touches[0].clientY - touchStartY;
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
-
   player.x += dx * 0.2;
   player.y += dy * 0.2;
 }, { passive: false });
@@ -126,7 +127,6 @@ function spawnBulletPattern() {
   let centerY = 0;
   let numBullets = 12; // タイトな弾幕にするため弾の数を増やす
   let angleStep = Math.PI * 2 / numBullets;
-
   for (let i = 0; i < numBullets; i++) {
     let angle = i * angleStep;
     bullets.push({
@@ -185,16 +185,23 @@ function drawPetal(size) {
  * @param {number} score - ゲームセッションの経過秒数
  */
 function updateLocalLeaderboard(score) {
-  // 配列に今回のスコアを追加
   localScores.push(score);
-  // 降順（高いスコア＝長生存）に並べ替え
-  const sortedScores = localScores.slice().sort((a, b) => b - a);
-  let leaderboardHTML = "<h3>Leaderboard</h3><ol>";
+  leaderboardDiv.innerHTML = generateLeaderboardHTML(localScores);
+}
+
+/**
+ * スコア配列からHTMLリストを生成する補助関数
+ * @param {number[]} scores - ローカルスコア配列
+ * @returns {string} HTMLリスト
+ */
+function generateLeaderboardHTML(scores) {
+  const sortedScores = scores.slice().sort((a, b) => b - a);
+  let html = "<ol>";
   sortedScores.slice(0, 10).forEach((s) => {
-    leaderboardHTML += `<li>${s.toFixed(2)}秒</li>`;
+    html += `<li>${s.toFixed(2)}秒</li>`;
   });
-  leaderboardHTML += "</ol>";
-  leaderboardDiv.innerHTML = leaderboardHTML;
+  html += "</ol>";
+  return html;
 }
 
 // ======================================================
@@ -204,12 +211,8 @@ function gameOver() {
   gameRunning = false;
   gameOverText.style.display = "block";
   restartButton.style.display = "block";
-
-  // 経過秒数をスコアとして算出（秒単位）
   const elapsedTime = (new Date() - startTime) / 1000;
-  // 最終スコア表示
   scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
-  // 自身のローカルランキングに今回のスコアを反映
   updateLocalLeaderboard(elapsedTime);
 }
 
