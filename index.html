@@ -1,53 +1,72 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>弾除けゲーム</title>
-    <style>
-        body {
-            text-align: center;
-            font-family: Arial, sans-serif;
-            background-color: black;
-            color: white;
-        }
-        h1 {
-            font-size: 2rem;
-            color: pink;
-        }
-        canvas {
-            border: 2px solid white;
-            background-color: black;
-            width: 90vw;
-            max-width: 600px;
-            height: auto;
-        }
-        #gameOverText {
-            font-size: 2rem;
-            color: red;
-            display: none;
-        }
-        #restartButton {
-            display: none;
-            margin-top: 10px;
-            padding: 10px 20px;
-            font-size: 1.5rem;
-            background-color: pink;
-            border: none;
-            color: black;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>弾除けゲーム</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background-color: black;
+      color: white;
+    }
+    h1 {
+      font-size: 2rem;
+      color: pink;
+    }
+    canvas {
+      border: 2px solid white;
+      background-color: black;
+      width: 90vw;
+      max-width: 600px;
+      height: auto;
+    }
+    #gameOverText {
+      font-size: 2rem;
+      color: red;
+      display: none;
+    }
+    #restartButton {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 1.5rem;
+      background-color: pink;
+      border: none;
+      color: black;
+      cursor: pointer;
+    }
+    #leaderboard {
+      margin-top: 20px;
+      text-align: left;
+      display: inline-block;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 10px;
+      border: 1px solid white;
+    }
+    #leaderboard h3 {
+      margin: 0 0 10px;
+      text-align: center;
+    }
+    #leaderboard ol {
+      padding-left: 20px;
+      margin: 0;
+    }
+  </style>
 </head>
 <body>
-    <h1>弾除けゲーム</h1>
-    <p>PC: WASD / 矢印キーで移動</p>
-    <p>スマホ: スワイプで移動</p>
+  <h1>弾除けゲーム</h1>
+  <p>PC: WASD / 矢印キーで移動</p>
+  <p>スマホ: スワイプで移動</p>
 
-    <canvas id="gameCanvas"></canvas>
-    <h2 id="gameOverText">Game Over!</h2>
-    <button id="restartButton">もう一度プレイ</button>
+  <canvas id="gameCanvas"></canvas>
+  <h2 id="gameOverText">Game Over!</h2>
+  <button id="restartButton">もう一度プレイ</button>
+  <!-- ランキング表示用エリア -->
+  <div id="leaderboard"></div>
 
-    <script type="module" src="shooting_Game_Console.js"></script>
+  <!-- shooting_Game_Console.js をモジュールとして読み込み -->
+  <script type="module" src="shooting_Game_Console.js"></script>
 </body>
 </html>
