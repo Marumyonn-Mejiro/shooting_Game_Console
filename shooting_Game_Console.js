@@ -5,21 +5,22 @@ const scoreDisplay = document.getElementById("scoreDisplay");
 const gameOverText = document.getElementById("gameOverText");
 const restartButton = document.getElementById("restartButton");
 
-// 定数
+// 定数設定
 const PLAYER_SIZE = 10;
 const BULLET_SIZE = 5;
 const BULLET_SPEED = 2;
 const PLAYER_SPEED = 4;
 
-// ゲーム関連の変数
+// ゲーム関連変数
 let player, bullets, keys, gameRunning, startTime;
 
 // ★ ゲーム初期化 ★
 function initGame() {
-  // キャンバスの実際の描画領域は画面サイズに合わせて設定
+  // キャンバスサイズは画面幅の90%（最大600px）、高さは画面高さの60%（最大400px）に設定
   canvas.width = Math.min(window.innerWidth * 0.9, 600);
   canvas.height = Math.min(window.innerHeight * 0.6, 400);
   
+  // プレイヤーの初期位置はキャンバス下部中央
   player = { x: canvas.width / 2, y: canvas.height - 30 };
   bullets = [];
   keys = {};
@@ -34,15 +35,10 @@ window.addEventListener("resize", initGame);
 initGame();
 
 // ★ キーボード操作 ★
-document.addEventListener("keydown", (e) => {
-  keys[e.key] = true;
-});
-document.addEventListener("keyup", (e) => {
-  keys[e.key] = false;
-});
+document.addEventListener("keydown", (e) => keys[e.key] = true);
+document.addEventListener("keyup", (e) => keys[e.key] = false);
 
-// ★ スマホのスワイプ操作 ★
-// ページスクロールを防ぐため、touchmove イベント内で preventDefault() を実施
+// ★ スマホのスワイプ操作（スクロール抑制のため preventDefault） ★
 let touchStartX = 0, touchStartY = 0;
 document.addEventListener("touchstart", (e) => {
   touchStartX = e.touches[0].clientX;
@@ -61,30 +57,39 @@ document.addEventListener("touchmove", (e) => {
 // ★ ゲームループ ★
 function gameLoop() {
   if (!gameRunning) return;
-  
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
+
   // プレイヤー移動処理
   if (keys["ArrowLeft"] || keys["a"]) player.x -= PLAYER_SPEED;
   if (keys["ArrowRight"] || keys["d"]) player.x += PLAYER_SPEED;
   if (keys["ArrowUp"] || keys["w"]) player.y -= PLAYER_SPEED;
   if (keys["ArrowDown"] || keys["s"]) player.y += PLAYER_SPEED;
-  
-  // 画面外への移動を防止
+
+  // 画面端での移動制限
   player.x = Math.max(0, Math.min(canvas.width - PLAYER_SIZE, player.x));
   player.y = Math.max(0, Math.min(canvas.height - PLAYER_SIZE, player.y));
-  
+
   // プレイヤー描画
   ctx.fillStyle = "blue";
   ctx.fillRect(player.x, player.y, PLAYER_SIZE, PLAYER_SIZE);
-  
-  // 弾の更新と描画
+
+  // 弾の更新
   bullets.forEach((b) => {
     b.x += b.dx * BULLET_SPEED;
     b.y += b.dy * BULLET_SPEED;
+  });
+
+  // 画面外の弾は削除
+  bullets = bullets.filter((b) =>
+    b.x >= -BULLET_SIZE &&
+    b.x <= canvas.width + BULLET_SIZE &&
+    b.y >= -BULLET_SIZE &&
+    b.y <= canvas.height + BULLET_SIZE
+  );
+
+  // 弾の描画と衝突判定
+  bullets.forEach((b) => {
     drawSakuraBullet(b.x, b.y, BULLET_SIZE * 4);
-    
-    // 衝突判定：プレイヤーと弾の重なりを検出
     if (
       b.x < player.x + PLAYER_SIZE &&
       b.x + BULLET_SIZE > player.x &&
@@ -94,23 +99,16 @@ function gameLoop() {
       gameOver();
     }
   });
-  // 画面外に出た弾は削除
-  bullets = bullets.filter((b) =>
-    b.x >= -BULLET_SIZE &&
-    b.x <= canvas.width + BULLET_SIZE &&
-    b.y >= -BULLET_SIZE &&
-    b.y <= canvas.height + BULLET_SIZE
-  );
-  
-  // 高頻度の弾幕発射
+
+  // ランダムに弾幕発射
   if (Math.random() < 0.1) {
     spawnBulletPattern();
   }
-  
-  // 生存時間（スコア）の更新表示
+
+  // 経過秒数（スコア）の更新表示
   const elapsedTime = (new Date() - startTime) / 1000;
   scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
-  
+
   requestAnimationFrame(gameLoop);
 }
 
@@ -147,7 +145,6 @@ function drawSakuraBullet(x, y, size) {
   ctx.fill();
   ctx.restore();
 }
-
 function drawPetal(size) {
   ctx.beginPath();
   ctx.moveTo(0, 0);
@@ -170,9 +167,7 @@ function gameOver() {
   gameRunning = false;
   gameOverText.style.display = "block";
   restartButton.style.display = "block";
-  const elapsedTime = (new Date() - startTime) / 1000;
-  scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
 }
 
-// ★ 再スタート ★
+// ★ 再スタートボタンのイベント ★
 restartButton.addEventListener("click", initGame);
