@@ -1,32 +1,35 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const gameOverText = document.getElementById("gameOverText");
+const restartButton = document.getElementById("restartButton");
 
 const PLAYER_SIZE = 10;
 const BULLET_SIZE = 5;
 const BULLET_SPEED = 2;
 const PLAYER_SPEED = 4;
 
-let player = { x: 200, y: 250 };
-let bullets = [];
-let keys = {};
-let gameRunning = true;
+let player, bullets, keys, gameRunning;
 
-// **画面サイズを調整する関数**
-function resizeCanvas() {
+// **ゲーム初期化**
+function initGame() {
     canvas.width = Math.min(window.innerWidth * 0.9, 600);
     canvas.height = Math.min(window.innerHeight * 0.6, 400);
-    player.x = canvas.width / 2;
-    player.y = canvas.height - 30;
+    player = { x: canvas.width / 2, y: canvas.height - 30 };
+    bullets = [];
+    keys = {};
+    gameRunning = true;
+    gameOverText.style.display = "none";
+    restartButton.style.display = "none";
+    gameLoop();
 }
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
+window.addEventListener("resize", initGame);
+initGame();
 
-// **キーボード入力**
+// **キーボード操作**
 document.addEventListener("keydown", (e) => keys[e.key] = true);
 document.addEventListener("keyup", (e) => keys[e.key] = false);
 
-// **スマホ向けスワイプ操作**
+// **スマホのスワイプ操作**
 let touchStartX = 0, touchStartY = 0;
 document.addEventListener("touchstart", (e) => {
     touchStartX = e.touches[0].clientX;
@@ -54,7 +57,7 @@ function gameLoop() {
     if (keys["ArrowUp"] || keys["w"]) player.y -= PLAYER_SPEED;
     if (keys["ArrowDown"] || keys["s"]) player.y += PLAYER_SPEED;
 
-    // **画面外に出ないよう制限**
+    // **画面端に制限**
     player.x = Math.max(0, Math.min(canvas.width - PLAYER_SIZE, player.x));
     player.y = Math.max(0, Math.min(canvas.height - PLAYER_SIZE, player.y));
 
@@ -71,10 +74,12 @@ function gameLoop() {
     // **画面外の弾を削除**
     bullets = bullets.filter((b) => b.y < canvas.height);
 
-    // **弾の描画処理**
-    ctx.fillStyle = "red";
+    // **弾の描画処理（桜の模様を描く）**
+    ctx.fillStyle = "pink";
     bullets.forEach((b) => {
-        ctx.fillRect(b.x, b.y, BULLET_SIZE, BULLET_SIZE);
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, BULLET_SIZE, 0, Math.PI * 2);
+        ctx.fill();
 
         // **衝突判定（当たったらゲームオーバー）**
         if (
@@ -83,25 +88,42 @@ function gameLoop() {
             b.y < player.y + PLAYER_SIZE &&
             b.y + BULLET_SIZE > player.y
         ) {
-            gameRunning = false;
-            gameOverText.style.display = "block";
+            gameOver();
         }
     });
 
-    // **弾幕の発射処理（ランダムな頻度）**
-    if (Math.random() < 0.02) {
-        let angle = Math.random() * Math.PI * 2;
-        let speed = Math.random() * 1.5 + 1;
-        bullets.push({
-            x: Math.random() * canvas.width,
-            y: 0,
-            dx: Math.cos(angle) * speed,
-            dy: Math.sin(angle) * speed + 1,
-        });
+    // **高頻度の弾幕発射**
+    if (Math.random() < 0.05) { // 発射頻度アップ
+        spawnBulletPattern();
     }
 
     requestAnimationFrame(gameLoop);
 }
 
-// **ゲーム開始**
-gameLoop();
+// **桜の模様を描く弾幕発射**
+function spawnBulletPattern() {
+    let centerX = Math.random() * canvas.width;
+    let centerY = 0;
+    let numBullets = 8; // 円形に8発
+    let angleStep = Math.PI * 2 / numBullets;
+
+    for (let i = 0; i < numBullets; i++) {
+        let angle = i * angleStep;
+        bullets.push({
+            x: centerX,
+            y: centerY,
+            dx: Math.cos(angle) * 1.5,
+            dy: Math.sin(angle) * 2 + 1,
+        });
+    }
+}
+
+// **ゲームオーバー処理**
+function gameOver() {
+    gameRunning = false;
+    gameOverText.style.display = "block";
+    restartButton.style.display = "block";
+}
+
+// **再スタート**
+restartButton.addEventListener("click", initGame);

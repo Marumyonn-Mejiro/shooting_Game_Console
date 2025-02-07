@@ -3,39 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>弾除けグゲーム</title>
+    <title>弾除けゲーム</title>
     <style>
         body {
             text-align: center;
             font-family: Arial, sans-serif;
+            background-color: black;
+            color: white;
         }
-        #gameContainer {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        h1 {
+            font-size: 2rem;
+            color: pink;
         }
         canvas {
-            border: 2px solid black;
+            border: 2px solid white;
             background-color: black;
-            width: 90vw; /* 幅の90% */
-            max-width: 600px; /* 最大幅を設定 */
-            height: auto; /* 高さを自動調整 */
+            width: 90vw;
+            max-width: 600px;
+            height: auto;
         }
         #gameOverText {
-            font-size: 2em; /* ゲームオーバー時の文字サイズ */
+            font-size: 2rem;
             color: red;
+            display: none;
+        }
+        #restartButton {
+            display: none;
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 1.5rem;
+            background-color: pink;
+            border: none;
+            color: black;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <h1 id="title">弾除けグゲーム</h1>
+    <h1>弾除けゲーム</h1>
     <p>PC: WASD / 矢印キーで移動</p>
     <p>スマホ: スワイプで移動</p>
 
-    <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
-        <h2 id="gameOverText" style="display:none;">Game Over! リロードで再開</h2>
-    </div>
+    <canvas id="gameCanvas"></canvas>
+    <h2 id="gameOverText">Game Over!</h2>
+    <button id="restartButton">もう一度プレイ</button>
 
     <script type="module" src="shooting_Game_Console.js"></script>
 </body>
