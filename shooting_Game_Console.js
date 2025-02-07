@@ -79,9 +79,9 @@ function gameLoop() {
         b.y <= canvas.height + BULLET_SIZE
     );
 
-    // **弾の描画処理（桜の花びらの弾）**
+    // **弾の描画処理（タイトな桜の花びらの弾）**
     bullets.forEach((b) => {
-        drawSakuraBullet(b.x, b.y, BULLET_SIZE * 4); // size倍率を調整して見やすく
+        drawSakuraBullet(b.x, b.y, BULLET_SIZE * 4); // size倍率は好みに応じて調整
         // **衝突判定（当たったらゲームオーバー）**
         if (
             b.x < player.x + PLAYER_SIZE &&
@@ -94,7 +94,7 @@ function gameLoop() {
     });
 
     // **高頻度の弾幕発射**
-    if (Math.random() < 0.1) { // 発射確率を上げて高頻度に
+    if (Math.random() < 0.1) {
         spawnBulletPattern();
     }
 
@@ -120,15 +120,9 @@ function spawnBulletPattern() {
 }
 
 // ======================================================
-// 【新規実装】桜の花びらを精密に描く関数群
+// 【更新済み】よりタイトな桜の花の弾（描画関数群）
 // ======================================================
 
-/**
- * 桜の弾（花）を描画する
- * @param {number} x - 描画するx座標（キャンバス上の中心）
- * @param {number} y - 描画するy座標（キャンバス上の中心）
- * @param {number} size - 花びらの長さ（大きさの指標）
- */
 function drawSakuraBullet(x, y, size) {
     ctx.save();
     ctx.translate(x, y);
@@ -142,29 +136,23 @@ function drawSakuraBullet(x, y, size) {
     // 中心部分（ハイライト）を描画
     ctx.beginPath();
     ctx.fillStyle = "rgba(255,255,255,0.9)";
-    ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2);
+    ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 }
 
-/**
- * 1枚の花びらを描画する（ベジェ曲線を利用）
- * @param {number} size - 花びらの長さ
- */
 function drawPetal(size) {
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    // 左側のベジェ曲線：制御点と終点を計算
     ctx.bezierCurveTo(
-        -size * 0.25, -size * 0.5,  // 第1制御点
-        -size * 0.4, -size * 0.8,   // 第2制御点
-        0, -size                  // 終点（花びらの先端）
+        -size * 0.12, -size * 0.3,
+        -size * 0.20, -size * 0.5,
+        0, -size * 0.65
     );
-    // 右側のベジェ曲線で対称的に描画
     ctx.bezierCurveTo(
-        size * 0.4, -size * 0.8,   // 第1制御点（右側）
-        size * 0.25, -size * 0.5,  // 第2制御点（右側）
-        0, 0                     // 終点（中心に戻る）
+        size * 0.20, -size * 0.5,
+        size * 0.12, -size * 0.3,
+        0, 0
     );
     ctx.fillStyle = "pink";
     ctx.fill();
