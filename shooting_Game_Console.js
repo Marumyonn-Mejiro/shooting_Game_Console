@@ -1,30 +1,4 @@
-// Firebase SDK（Realtime Database版）のモジュール方式での読み込み
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { 
-  getDatabase, 
-  ref, 
-  push, 
-  set, 
-  query, 
-  orderByChild, 
-  limitToLast, 
-  get 
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-// ※ 以下の firebaseConfig はご自身の Firebase プロジェクトの情報に合わせて変更してください
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "mejiroshootinggameconsole.firebaseapp.com",
-  databaseURL: "https://mejiroshootinggameconsole-default-rtdb.firebaseio.com/",
-  projectId: "mejiroshootinggameconsole",
-  storageBucket: "mejiroshootinggameconsole.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-
-// Firebase 初期化
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+// ※ Firebase 関連のコードは削除し、ローカル配列でスコア集計を行います
 
 // DOM 要素の取得
 const canvas = document.getElementById("gameCanvas");
@@ -43,6 +17,9 @@ const PLAYER_SPEED = 4;
 // ゲーム関連の変数
 let player, bullets, keys, gameRunning, startTime;
 
+// この配列に、各ゲームセッションでのスコア（経過秒数）を記録します
+let localScores = [];
+
 // **ゲーム初期化**
 function initGame() {
   canvas.width = Math.min(window.innerWidth * 0.9, 600);
@@ -55,7 +32,7 @@ function initGame() {
   restartButton.style.display = "none";
   leaderboardDiv.innerHTML = "";  // ランキング表示エリアをクリア
   startTime = new Date(); // ゲーム開始時刻を記録
-  // スコア表示も初期化
+  // スコア表示の初期化
   scoreDisplay.textContent = "Score: 0.00秒";
   gameLoop();
 }
@@ -66,15 +43,14 @@ initGame();
 document.addEventListener("keydown", (e) => keys[e.key] = true);
 document.addEventListener("keyup", (e) => keys[e.key] = false);
 
-// **スマホのスワイプ操作（※画面スクロールを抑制するため preventDefault を実施）**
+// **スマホのスワイプ操作（画面スクロール防止のため preventDefault を実施）**
 let touchStartX = 0, touchStartY = 0;
 document.addEventListener("touchstart", (e) => {
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
 });
 document.addEventListener("touchmove", (e) => {
-  // スワイプによるページスクロールを防止
-  e.preventDefault();
+  e.preventDefault(); // ページ全体のスクロールを防止
   let dx = e.touches[0].clientX - touchStartX;
   let dy = e.touches[0].clientY - touchStartY;
   touchStartX = e.touches[0].clientX;
@@ -96,7 +72,7 @@ function gameLoop() {
   if (keys["ArrowUp"] || keys["w"]) player.y -= PLAYER_SPEED;
   if (keys["ArrowDown"] || keys["s"]) player.y += PLAYER_SPEED;
 
-  // 画面端に制限
+  // 画面端での制限
   player.x = Math.max(0, Math.min(canvas.width - PLAYER_SIZE, player.x));
   player.y = Math.max(0, Math.min(canvas.height - PLAYER_SIZE, player.y));
 
@@ -121,7 +97,7 @@ function gameLoop() {
   // 弾の描画処理（タイトな桜の花びらの弾）
   bullets.forEach((b) => {
     drawSakuraBullet(b.x, b.y, BULLET_SIZE * 4);
-    // 衝突判定（当たったらゲームオーバー）
+    // 衝突判定：プレイヤーと弾が接触したらゲームオーバー
     if (
       b.x < player.x + PLAYER_SIZE &&
       b.x + BULLET_SIZE > player.x &&
@@ -148,7 +124,7 @@ function gameLoop() {
 function spawnBulletPattern() {
   let centerX = Math.random() * canvas.width;
   let centerY = 0;
-  let numBullets = 12; // 弾の数を増やしてタイトな弾幕に
+  let numBullets = 12; // タイトな弾幕にするため弾の数を増やす
   let angleStep = Math.PI * 2 / numBullets;
 
   for (let i = 0; i < numBullets; i++) {
@@ -201,56 +177,28 @@ function drawPetal(size) {
 }
 
 // ======================================================
-// オンラインランキング用関数（Realtime Database版）
+// ローカルランキング用関数（自身のページ内でのスコア集計）
 // ======================================================
 
 /**
- * スコア（経過秒数）を Realtime Database に送信する
- * @param {number} score - 経過秒数
+ * 自身のスコアを localScores 配列に追加し、ランキングを更新して表示する
+ * @param {number} score - ゲームセッションの経過秒数
  */
-function submitScore(score) {
-  // "scores" ノードに新規エントリを追加
-  const scoresRef = ref(db, "scores");
-  const newScoreRef = push(scoresRef);
-  set(newScoreRef, {
-    score: score,
-    timestamp: new Date().toISOString()
-  }).then(() => {
-    console.log("Score submitted:", score);
-  }).catch((e) => {
-    console.error("Error submitting score:", e);
+function updateLocalLeaderboard(score) {
+  // 配列に今回のスコアを追加
+  localScores.push(score);
+  // 降順（高いスコア＝長生存）に並べ替え
+  const sortedScores = localScores.slice().sort((a, b) => b - a);
+  let leaderboardHTML = "<h3>Leaderboard</h3><ol>";
+  sortedScores.slice(0, 10).forEach((s) => {
+    leaderboardHTML += `<li>${s.toFixed(2)}秒</li>`;
   });
-}
-
-/**
- * Realtime Database から上位10件のスコアを取得し、ランキング表示する
- */
-async function getLeaderboard() {
-  const scoresRef = ref(db, "scores");
-  // score の値が大きい＝長生存（高得点）なので、orderByChild と limitToLast を利用
-  const leaderboardQuery = query(scoresRef, orderByChild("score"), limitToLast(10));
-  try {
-    const snapshot = await get(leaderboardQuery);
-    let scoresArray = [];
-    snapshot.forEach((childSnapshot) => {
-      scoresArray.push(childSnapshot.val());
-    });
-    // 取得結果は昇順なので、降順に並べ替える
-    scoresArray.sort((a, b) => b.score - a.score);
-    
-    let leaderboardHTML = "<h3>Leaderboard</h3><ol>";
-    scoresArray.forEach((data) => {
-      leaderboardHTML += `<li>${parseFloat(data.score).toFixed(2)}秒</li>`;
-    });
-    leaderboardHTML += "</ol>";
-    leaderboardDiv.innerHTML = leaderboardHTML;
-  } catch (e) {
-    console.error("Error fetching leaderboard:", e);
-  }
+  leaderboardHTML += "</ol>";
+  leaderboardDiv.innerHTML = leaderboardHTML;
 }
 
 // ======================================================
-// ゲームオーバー処理（スコア送信＋ランキング表示）
+// ゲームオーバー処理（スコア記録＋ランキング更新）
 // ======================================================
 function gameOver() {
   gameRunning = false;
@@ -259,12 +207,10 @@ function gameOver() {
 
   // 経過秒数をスコアとして算出（秒単位）
   const elapsedTime = (new Date() - startTime) / 1000;
-  // 自身のスコアも最終表示
+  // 最終スコア表示
   scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
-  // スコアを Realtime Database に送信
-  submitScore(elapsedTime);
-  // 最新のランキングを取得して表示
-  getLeaderboard();
+  // 自身のローカルランキングに今回のスコアを反映
+  updateLocalLeaderboard(elapsedTime);
 }
 
 // **再スタート**
