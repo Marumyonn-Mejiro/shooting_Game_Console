@@ -79,9 +79,9 @@ function gameLoop() {
         b.y <= canvas.height + BULLET_SIZE
     );
 
-    // **弾の描画処理（桜の模様の弾）**
+    // **弾の描画処理（桜の花びらの弾）**
     bullets.forEach((b) => {
-        drawSakuraBullet(b.x, b.y, BULLET_SIZE);
+        drawSakuraBullet(b.x, b.y, BULLET_SIZE * 4); // size倍率を調整して見やすく
         // **衝突判定（当たったらゲームオーバー）**
         if (
             b.x < player.x + PLAYER_SIZE &&
@@ -101,7 +101,7 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// **桜の模様を描く弾幕発射**
+// **桜の花びらを描く弾幕発射**
 function spawnBulletPattern() {
     let centerX = Math.random() * canvas.width;
     let centerY = 0;
@@ -119,27 +119,55 @@ function spawnBulletPattern() {
     }
 }
 
-// **桜の模様の弾（桜の花びら風）の描画関数**
+// ======================================================
+// 【新規実装】桜の花びらを精密に描く関数群
+// ======================================================
+
+/**
+ * 桜の弾（花）を描画する
+ * @param {number} x - 描画するx座標（キャンバス上の中心）
+ * @param {number} y - 描画するy座標（キャンバス上の中心）
+ * @param {number} size - 花びらの長さ（大きさの指標）
+ */
 function drawSakuraBullet(x, y, size) {
     ctx.save();
     ctx.translate(x, y);
-    ctx.fillStyle = "pink";
-    // 5枚の花びらを描画
+    // 5枚の花びらを放射状に描画
     for (let i = 0; i < 5; i++) {
         ctx.save();
-        ctx.rotate(i * (Math.PI * 2 / 5));
-        ctx.beginPath();
-        // 花びらを楕円で表現（上方向に伸びる楕円）
-        ctx.ellipse(0, -size, size * 0.4, size, 0, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.rotate((i * 2 * Math.PI) / 5);
+        drawPetal(size);
         ctx.restore();
     }
-    // 中心部分の丸（ハイライト）
+    // 中心部分（ハイライト）を描画
     ctx.beginPath();
-    ctx.fillStyle = "white";
+    ctx.fillStyle = "rgba(255,255,255,0.9)";
     ctx.arc(0, 0, size * 0.3, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+}
+
+/**
+ * 1枚の花びらを描画する（ベジェ曲線を利用）
+ * @param {number} size - 花びらの長さ
+ */
+function drawPetal(size) {
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    // 左側のベジェ曲線：制御点と終点を計算
+    ctx.bezierCurveTo(
+        -size * 0.25, -size * 0.5,  // 第1制御点
+        -size * 0.4, -size * 0.8,   // 第2制御点
+        0, -size                  // 終点（花びらの先端）
+    );
+    // 右側のベジェ曲線で対称的に描画
+    ctx.bezierCurveTo(
+        size * 0.4, -size * 0.8,   // 第1制御点（右側）
+        size * 0.25, -size * 0.5,  // 第2制御点（右側）
+        0, 0                     // 終点（中心に戻る）
+    );
+    ctx.fillStyle = "pink";
+    ctx.fill();
 }
 
 // **ゲームオーバー処理**
