@@ -1,4 +1,4 @@
-// ※ Firebase 関連のコードは削除し、ローカル配列でスコア集計を行います
+// ※ Firebase などのオンライン集計は行わず、ローカル配列でスコアを集計します
 
 // DOM 要素の取得
 const canvas = document.getElementById("gameCanvas");
@@ -6,7 +6,7 @@ const ctx = canvas.getContext("2d");
 const scoreDisplay = document.getElementById("scoreDisplay");
 const gameOverText = document.getElementById("gameOverText");
 const restartButton = document.getElementById("restartButton");
-const leaderboardDiv = document.getElementById("leaderboard");
+const leaderboardList = document.getElementById("leaderboard");
 
 // 定数
 const PLAYER_SIZE = 10;
@@ -17,23 +17,25 @@ const PLAYER_SPEED = 4;
 // ゲーム関連の変数
 let player, bullets, keys, gameRunning, startTime;
 
-// この配列に、各ゲームセッションでのスコア（経過秒数）を記録します
+// この配列に各ゲームセッションのスコア（経過秒数）を記録します
 let localScores = [];
 
 // **ゲーム初期化**
 function initGame() {
+  // キャンバスサイズの設定
   canvas.width = Math.min(window.innerWidth * 0.9, 600);
   canvas.height = Math.min(window.innerHeight * 0.6, 400);
+  
+  // ゲーム内初期設定
   player = { x: canvas.width / 2, y: canvas.height - 30 };
   bullets = [];
   keys = {};
   gameRunning = true;
   gameOverText.style.display = "none";
   restartButton.style.display = "none";
-  // ランキング表示エリアを初期化（既存のスコアはそのまま）
-  leaderboardDiv.innerHTML = localScores.length
-    ? generateLeaderboardHTML(localScores)
-    : "<p>まだスコアはありません。</p>";
+  
+  // ランキングエリアは初期化しない（過去のスコアは保持）
+  
   startTime = new Date(); // ゲーム開始時刻を記録
   scoreDisplay.textContent = "Score: 0.00秒";
   gameLoop();
@@ -45,7 +47,7 @@ initGame();
 document.addEventListener("keydown", (e) => keys[e.key] = true);
 document.addEventListener("keyup", (e) => keys[e.key] = false);
 
-// **スマホのスワイプ操作（画面スクロール防止のため preventDefault を実施）**
+// **スマホのスワイプ操作（スクロール防止のため preventDefault を実施）**
 let touchStartX = 0, touchStartY = 0;
 document.addEventListener("touchstart", (e) => {
   touchStartX = e.touches[0].clientX;
@@ -114,7 +116,7 @@ function gameLoop() {
     spawnBulletPattern();
   }
 
-  // 自身のスコア（経過秒数）を更新して表示
+  // 自身のスコア（経過秒数）の更新表示
   const elapsedTime = (new Date() - startTime) / 1000;
   scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
 
@@ -125,8 +127,9 @@ function gameLoop() {
 function spawnBulletPattern() {
   let centerX = Math.random() * canvas.width;
   let centerY = 0;
-  let numBullets = 12; // タイトな弾幕にするため弾の数を増やす
+  let numBullets = 12; // 弾の数を増やしてタイトな弾幕に
   let angleStep = Math.PI * 2 / numBullets;
+
   for (let i = 0; i < numBullets; i++) {
     let angle = i * angleStep;
     bullets.push({
@@ -181,27 +184,18 @@ function drawPetal(size) {
 // ======================================================
 
 /**
- * 自身のスコアを localScores 配列に追加し、ランキングを更新して表示する
+ * 今回のスコアを localScores 配列に追加し、ランキング（上位10件）を更新して表示する
  * @param {number} score - ゲームセッションの経過秒数
  */
 function updateLocalLeaderboard(score) {
   localScores.push(score);
-  leaderboardDiv.innerHTML = generateLeaderboardHTML(localScores);
-}
-
-/**
- * スコア配列からHTMLリストを生成する補助関数
- * @param {number[]} scores - ローカルスコア配列
- * @returns {string} HTMLリスト
- */
-function generateLeaderboardHTML(scores) {
-  const sortedScores = scores.slice().sort((a, b) => b - a);
-  let html = "<ol>";
+  // 降順（長生存＝高得点）に並べ替え
+  const sortedScores = localScores.slice().sort((a, b) => b - a);
+  let html = "";
   sortedScores.slice(0, 10).forEach((s) => {
     html += `<li>${s.toFixed(2)}秒</li>`;
   });
-  html += "</ol>";
-  return html;
+  leaderboardList.innerHTML = html;
 }
 
 // ======================================================
@@ -211,6 +205,7 @@ function gameOver() {
   gameRunning = false;
   gameOverText.style.display = "block";
   restartButton.style.display = "block";
+
   const elapsedTime = (new Date() - startTime) / 1000;
   scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
   updateLocalLeaderboard(elapsedTime);

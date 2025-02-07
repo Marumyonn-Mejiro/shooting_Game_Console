@@ -6,27 +6,48 @@
   <title>弾除けゲーム</title>
   <style>
     body {
-      text-align: center;
+      margin: 0;
+      padding: 0;
       font-family: Arial, sans-serif;
       background-color: black;
       color: white;
-      /* タッチ操作時のスクロール防止 */
+      /* タッチ操作時のスクロールを防止 */
       overflow: hidden;
     }
     h1 {
       font-size: 2rem;
       color: pink;
+      margin: 10px 0;
+    }
+    /* ゲーム画面とランキング枠を横並びにするラッパー */
+    #gameWrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    /* ゲームエリア */
+    #gameArea {
+      flex: 1;
+      max-width: 600px;
     }
     canvas {
       border: 2px solid white;
       background-color: black;
-      width: 90vw;
-      max-width: 600px;
+      width: 100%;
       height: auto;
+      display: block;
     }
     #scoreDisplay {
       margin-top: 10px;
       font-size: 1.2rem;
+      text-align: center;
+    }
+    #gameOverContainer {
+      text-align: center;
+      margin-top: 10px;
     }
     #gameOverText {
       font-size: 2rem;
@@ -43,15 +64,15 @@
       color: black;
       cursor: pointer;
     }
-    /* 新たにランキング表示用の枠を作成 */
+    /* ランキング表示エリア */
     #leaderboardContainer {
-      margin: 20px auto;
-      width: 90vw;
-      max-width: 600px;
-      background-color: rgba(255, 255, 255, 0.1);
-      border: 2px solid white;
+      width: 220px;
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid white;
       padding: 10px;
-      text-align: left;
+      box-sizing: border-box;
+      max-height: 400px;
+      overflow-y: auto;
     }
     #leaderboardContainer h3 {
       margin: 0 0 10px;
@@ -65,21 +86,23 @@
 </head>
 <body>
   <h1>弾除けゲーム</h1>
-  <p>PC: WASD / 矢印キーで移動</p>
-  <p>スマホ: スワイプで移動（※画面スクロールは無効化）</p>
+  <p style="text-align: center;">PC: WASD / 矢印キーで移動 &nbsp;&nbsp;|&nbsp;&nbsp; スマホ: スワイプで移動（※画面スクロールは無効化）</p>
 
-  <canvas id="gameCanvas"></canvas>
-  <!-- 自身のスコア表示用エリア -->
-  <div id="scoreDisplay"></div>
-  <h2 id="gameOverText">Game Over!</h2>
-  <button id="restartButton">もう一度プレイ</button>
-
-  <!-- ランキング表示用エリア（専用の枠） -->
-  <div id="leaderboardContainer">
-    <h3>Local Ranking</h3>
-    <div id="leaderboard">
-      <!-- ランキングはここに表示されます -->
-      <p>まだスコアはありません。</p>
+  <!-- ゲーム画面とランキング表示をラップするコンテナ -->
+  <div id="gameWrapper">
+    <!-- ゲームエリア -->
+    <div id="gameArea">
+      <canvas id="gameCanvas"></canvas>
+      <div id="scoreDisplay">Score: 0.00秒</div>
+      <div id="gameOverContainer">
+        <h2 id="gameOverText">Game Over!</h2>
+        <button id="restartButton">もう一度プレイ</button>
+      </div>
+    </div>
+    <!-- ランキング表示エリア -->
+    <div id="leaderboardContainer">
+      <h3>Local Leaderboard</h3>
+      <ol id="leaderboard"></ol>
     </div>
   </div>
 
