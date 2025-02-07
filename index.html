@@ -2,64 +2,69 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <!-- viewport設定でスマホでも適切な表示に -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>弾除けゲーム</title>
   <style>
-    /* 全体リセット */
-    * {
+    /* 全体レイアウト */
+    body {
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-    }
-    body {
+      font-family: Arial, sans-serif;
       background-color: black;
       color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      overflow: hidden; /* ページ全体のスクロールを抑制 */
-    }
-    header {
-      padding: 10px;
-      background-color: #111;
-    }
-    header h1 {
-      font-size: 2rem;
-      color: pink;
-    }
-    /* ゲームコンテナ（画面全体に収める） */
-    #gameContainer {
+      overflow: hidden;  /* ページスクロールを防止 */
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: calc(100vh - 60px); /* ヘッダー分を差し引く */
-      padding: 10px;
+      min-height: 100vh;
     }
-    /* キャンバスは画面幅の90%、最大600px */
+    h1 {
+      color: pink;
+      margin: 10px 0;
+      font-size: 2rem;
+      text-align: center;
+    }
+    p {
+      text-align: center;
+      margin: 5px 0 15px;
+    }
+    /* ゲーム画面と操作UIを内包するコンテナ */
+    #gameContainer {
+      width: 95vw;
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    /* キャンバスは画面サイズに合わせて可変 */
     canvas {
       border: 2px solid white;
       background-color: black;
-      width: 90vw;
-      max-width: 600px;
+      width: 100%;
       height: auto;
       display: block;
     }
     /* スコア表示 */
     #scoreDisplay {
-      margin-top: 10px;
+      margin: 10px 0;
       font-size: 1.2rem;
+      text-align: center;
     }
-    /* ゲームオーバーエリア */
+    /* ゲームオーバー時の表示エリア */
     #gameOverContainer {
+      text-align: center;
       margin-top: 10px;
     }
     #gameOverText {
       font-size: 2rem;
       color: red;
       display: none;
+      margin: 5px 0;
     }
     #restartButton {
+      display: none;
       margin-top: 10px;
       padding: 10px 20px;
       font-size: 1.5rem;
@@ -67,19 +72,32 @@
       border: none;
       color: black;
       cursor: pointer;
-      display: none;
+    }
+    /* スマホなど画面幅が狭い場合の調整 */
+    @media (max-width: 600px) {
+      #gameContainer {
+        width: 90vw;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      #restartButton {
+        font-size: 1.3rem;
+        padding: 8px 16px;
+      }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>弾除けゲーム</h1>
-  </header>
+  <h1>弾除けゲーム</h1>
+  <p>PC: WASD / 矢印キーで移動　｜　スマホ: スワイプで移動（※スクロールは無効）</p>
+  
+  <!-- ゲーム画面・スコア・ボタンを内包するコンテナ -->
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
     <div id="scoreDisplay">Score: 0.00秒</div>
     <div id="gameOverContainer">
-      <div id="gameOverText">Game Over!</div>
+      <h2 id="gameOverText">Game Over!</h2>
       <button id="restartButton">もう一度プレイ</button>
     </div>
   </div>
