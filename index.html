@@ -10,6 +10,8 @@
       font-family: Arial, sans-serif;
       background-color: black;
       color: white;
+      /* 全体のタッチ操作でのスクロールを防ぐ */
+      overflow: hidden;
     }
     h1 {
       font-size: 2rem;
@@ -21,6 +23,10 @@
       width: 90vw;
       max-width: 600px;
       height: auto;
+    }
+    #scoreDisplay {
+      margin-top: 10px;
+      font-size: 1.2rem;
     }
     #gameOverText {
       font-size: 2rem;
@@ -58,9 +64,11 @@
 <body>
   <h1>弾除けゲーム</h1>
   <p>PC: WASD / 矢印キーで移動</p>
-  <p>スマホ: スワイプで移動</p>
+  <p>スマホ: スワイプで移動（※画面スクロールは無効化）</p>
 
   <canvas id="gameCanvas"></canvas>
+  <!-- 自身のスコア表示用エリア -->
+  <div id="scoreDisplay"></div>
   <h2 id="gameOverText">Game Over!</h2>
   <button id="restartButton">もう一度プレイ</button>
   <!-- ランキング表示用エリア -->

@@ -1,4 +1,4 @@
-// Firebase SDK のモジュール方式（Realtime Database版）の読み込み
+// Firebase SDK（Realtime Database版）のモジュール方式での読み込み
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { 
   getDatabase, 
@@ -11,7 +11,7 @@ import {
   get 
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
-// ※ 以下の firebaseConfig はご自身の Firebase プロジェクトの情報に書き換えてください
+// ※ 以下の firebaseConfig はご自身の Firebase プロジェクトの情報に合わせて変更してください
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "mejiroshootinggameconsole.firebaseapp.com",
@@ -29,6 +29,7 @@ const db = getDatabase(app);
 // DOM 要素の取得
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+const scoreDisplay = document.getElementById("scoreDisplay");
 const gameOverText = document.getElementById("gameOverText");
 const restartButton = document.getElementById("restartButton");
 const leaderboardDiv = document.getElementById("leaderboard");
@@ -54,6 +55,8 @@ function initGame() {
   restartButton.style.display = "none";
   leaderboardDiv.innerHTML = "";  // ランキング表示エリアをクリア
   startTime = new Date(); // ゲーム開始時刻を記録
+  // スコア表示も初期化
+  scoreDisplay.textContent = "Score: 0.00秒";
   gameLoop();
 }
 window.addEventListener("resize", initGame);
@@ -63,13 +66,15 @@ initGame();
 document.addEventListener("keydown", (e) => keys[e.key] = true);
 document.addEventListener("keyup", (e) => keys[e.key] = false);
 
-// **スマホのスワイプ操作**
+// **スマホのスワイプ操作（※画面スクロールを抑制するため preventDefault を実施）**
 let touchStartX = 0, touchStartY = 0;
 document.addEventListener("touchstart", (e) => {
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
 });
 document.addEventListener("touchmove", (e) => {
+  // スワイプによるページスクロールを防止
+  e.preventDefault();
   let dx = e.touches[0].clientX - touchStartX;
   let dy = e.touches[0].clientY - touchStartY;
   touchStartX = e.touches[0].clientX;
@@ -77,7 +82,7 @@ document.addEventListener("touchmove", (e) => {
 
   player.x += dx * 0.2;
   player.y += dy * 0.2;
-});
+}, { passive: false });
 
 // **ゲームループ**
 function gameLoop() {
@@ -85,27 +90,27 @@ function gameLoop() {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // **プレイヤー移動処理**
+  // プレイヤー移動処理
   if (keys["ArrowLeft"] || keys["a"]) player.x -= PLAYER_SPEED;
   if (keys["ArrowRight"] || keys["d"]) player.x += PLAYER_SPEED;
   if (keys["ArrowUp"] || keys["w"]) player.y -= PLAYER_SPEED;
   if (keys["ArrowDown"] || keys["s"]) player.y += PLAYER_SPEED;
 
-  // **画面端に制限**
+  // 画面端に制限
   player.x = Math.max(0, Math.min(canvas.width - PLAYER_SIZE, player.x));
   player.y = Math.max(0, Math.min(canvas.height - PLAYER_SIZE, player.y));
 
-  // **プレイヤー描画**
+  // プレイヤー描画
   ctx.fillStyle = "blue";
   ctx.fillRect(player.x, player.y, PLAYER_SIZE, PLAYER_SIZE);
 
-  // **弾の更新処理**
+  // 弾の更新処理
   bullets.forEach((b) => {
     b.x += b.dx * BULLET_SPEED;
     b.y += b.dy * BULLET_SPEED;
   });
 
-  // **画面外の弾を削除**
+  // 画面外の弾を削除
   bullets = bullets.filter((b) =>
     b.x >= -BULLET_SIZE &&
     b.x <= canvas.width + BULLET_SIZE &&
@@ -113,10 +118,10 @@ function gameLoop() {
     b.y <= canvas.height + BULLET_SIZE
   );
 
-  // **弾の描画処理（タイトな桜の花びらの弾）**
+  // 弾の描画処理（タイトな桜の花びらの弾）
   bullets.forEach((b) => {
     drawSakuraBullet(b.x, b.y, BULLET_SIZE * 4);
-    // **衝突判定（当たったらゲームオーバー）**
+    // 衝突判定（当たったらゲームオーバー）
     if (
       b.x < player.x + PLAYER_SIZE &&
       b.x + BULLET_SIZE > player.x &&
@@ -127,10 +132,14 @@ function gameLoop() {
     }
   });
 
-  // **高頻度の弾幕発射**
+  // 高頻度の弾幕発射
   if (Math.random() < 0.1) {
     spawnBulletPattern();
   }
+
+  // 自身のスコア（経過秒数）を更新して表示
+  const elapsedTime = (new Date() - startTime) / 1000;
+  scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
 
   requestAnimationFrame(gameLoop);
 }
@@ -154,7 +163,7 @@ function spawnBulletPattern() {
 }
 
 // ======================================================
-// 桜の花の弾（描画関数群）【タイトなバージョン】
+// 桜の花の弾（描画関数群：タイトなバージョン）
 // ======================================================
 function drawSakuraBullet(x, y, size) {
   ctx.save();
@@ -166,7 +175,7 @@ function drawSakuraBullet(x, y, size) {
     drawPetal(size);
     ctx.restore();
   }
-  // 中心部分（ハイライト）を描画
+  // 中心部分（ハイライト）の描画
   ctx.beginPath();
   ctx.fillStyle = "rgba(255,255,255,0.9)";
   ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
@@ -218,7 +227,7 @@ function submitScore(score) {
  */
 async function getLeaderboard() {
   const scoresRef = ref(db, "scores");
-  // score の値が大きい＝長く生存（高得点）なので、orderByChild と limitToLast を利用
+  // score の値が大きい＝長生存（高得点）なので、orderByChild と limitToLast を利用
   const leaderboardQuery = query(scoresRef, orderByChild("score"), limitToLast(10));
   try {
     const snapshot = await get(leaderboardQuery);
@@ -250,6 +259,8 @@ function gameOver() {
 
   // 経過秒数をスコアとして算出（秒単位）
   const elapsedTime = (new Date() - startTime) / 1000;
+  // 自身のスコアも最終表示
+  scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
   // スコアを Realtime Database に送信
   submitScore(elapsedTime);
   // 最新のランキングを取得して表示
