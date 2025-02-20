@@ -14,6 +14,7 @@ const PLAYER_SPEED = 4;
 // ゲーム関連の変数
 let player, boss, bossBullets, playerBullets, keys, gameRunning, startTime;
 let gameOutcome = ""; // "You Win!" または "Game Over!"
+let enemyDefeatedCount = 0; // 敵撃破数
 
 // ★ ゲーム初期化 ★
 function initGame() {
@@ -179,6 +180,7 @@ function gameLoop() {
       boss.health -= 1;
       playerBullets.splice(index, 1);
       if (boss.health <= 0) {
+        enemyDefeatedCount++;  // 敵撃破数を増加
         gameOutcome = "You Win!";
         gameRunning = false;
       }
@@ -198,6 +200,11 @@ function gameLoop() {
     ctx.font = "12px Arial";
     ctx.fillText("HP: " + boss.health, boss.x, boss.y - 5);
   }
+  
+  // ★ 敵撃破数表示 ★
+  ctx.fillStyle = "white";
+  ctx.font = "14px Arial";
+  ctx.fillText(`敵撃破数: ${enemyDefeatedCount}`, 10, 20);
   
   // 生存時間（スコア）の更新表示
   const elapsedTime = (new Date() - startTime) / 1000;
@@ -245,4 +252,17 @@ function drawPetal(size) {
 restartButton.addEventListener("click", initGame);
 
 // ★ スペースキーで弾を発射、Rキーで再スタート ★
-document.addEvent
+document.addEventListener("keydown", (e) => {
+  if (e.key === " " && gameRunning) {
+    playerBullets.push({
+      x: player.x + PLAYER_SIZE / 2,
+      y: player.y,
+      dx: 0,
+      dy: -5
+    });
+    e.preventDefault();
+  }
+  if (e.key === "r" && !gameRunning) {
+    initGame();
+  }
+});
