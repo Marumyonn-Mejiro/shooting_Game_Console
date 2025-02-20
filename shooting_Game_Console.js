@@ -33,7 +33,7 @@ function initGame() {
     height: 20,
     health: 3,
     lastShotTime: 0,
-    shotInterval: 3000
+    shotInterval: 1500  // 弾幕の発射間隔を短く設定
   };
   
   // 弾用配列の初期化
@@ -128,7 +128,7 @@ function gameLoop() {
     // ★ ボスの発射処理 ★
     if (Date.now() - boss.lastShotTime > boss.shotInterval) {
       // 放射状（全方向）に弾を発射
-      const numBullets = 8;
+      const numBullets = 12;  // 弾幕の量を増加
       for (let i = 0; i < numBullets; i++) {
         let angle = (2 * Math.PI / numBullets) * i;
         let speed = 3;
@@ -208,6 +208,7 @@ function gameLoop() {
   
   // 生存時間（スコア）の更新表示
   const elapsedTime = (new Date() - startTime) / 1000;
+ 
   scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
   
   requestAnimationFrame(gameLoop);
