@@ -33,7 +33,8 @@ function initGame() {
     height: 20,
     health: 3,
     lastShotTime: 0,
-    shotInterval: 1500  // 弾幕の発射間隔を短く設定
+    shotInterval: 1000,  // 弾幕の発射間隔を非常に短く設定
+    speed: 2,            // ボスのランダム移動速度
   };
   
   // 弾用配列の初期化
@@ -118,17 +119,16 @@ function gameLoop() {
   
   // ★ ボスのランダム移動 ★
   if (boss && boss.health > 0) {
-    // 毎フレーム、ランダムに少しずつ移動（水平・垂直）
-    boss.x += (Math.random() - 0.5) * 2;  // -1〜+1
-    boss.y += (Math.random() - 0.5) * 1;  // -0.5〜+0.5
-    // 移動範囲の制限：ボスは画面上部に留める（例：上半分内）
+    boss.x += (Math.random() - 0.5) * boss.speed;
+    boss.y += (Math.random() - 0.5) * boss.speed;
+    // 移動範囲の制限：ボスは画面内に収める
     boss.x = Math.max(0, Math.min(canvas.width - boss.width, boss.x));
     boss.y = Math.max(0, Math.min(canvas.height / 2 - boss.height, boss.y));
   
     // ★ ボスの発射処理 ★
     if (Date.now() - boss.lastShotTime > boss.shotInterval) {
       // 放射状（全方向）に弾を発射
-      const numBullets = 12;  // 弾幕の量を増加
+      const numBullets = 15;  // 弾幕の量を増加
       for (let i = 0; i < numBullets; i++) {
         let angle = (2 * Math.PI / numBullets) * i;
         let speed = 3;
@@ -208,7 +208,6 @@ function gameLoop() {
   
   // 生存時間（スコア）の更新表示
   const elapsedTime = (new Date() - startTime) / 1000;
- 
   scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
   
   requestAnimationFrame(gameLoop);
