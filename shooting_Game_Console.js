@@ -59,7 +59,7 @@ document.addEventListener("keydown", (e) => {
   // 移動キーの状態記録
   keys[e.key] = true;
   // スペースキーで自機弾発射
-  if (e.key === " ") {
+  if (e.key === " " && gameRunning) {
     // 自機の上方向に弾を発射
     playerBullets.push({
       x: player.x + PLAYER_SIZE / 2,
@@ -68,6 +68,10 @@ document.addEventListener("keydown", (e) => {
       dy: -5
     });
     e.preventDefault();
+  }
+  // エンターキーで再スタート（ゲームオーバー後）
+  if (e.key === "Enter" && !gameRunning) {
+    initGame();
   }
 });
 document.addEventListener("keyup", (e) => { keys[e.key] = false; });
@@ -207,10 +211,3 @@ function gameLoop() {
 
 // ★ 再プレイボタンの処理 ★
 restartButton.addEventListener("click", initGame);
-
-// ★ スペースキーで再スタート ★
-document.addEventListener("keydown", (e) => {
-  if (e.key === " " && !gameRunning) {
-    initGame();
-  }
-});
