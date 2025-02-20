@@ -58,9 +58,8 @@ initGame();
 document.addEventListener("keydown", (e) => {
   // 移動キーの状態記録
   keys[e.key] = true;
-  // スペースキーで自機弾発射
+  // スペースキーで自機弾発射（※重複発射防止）
   if (e.key === " " && gameRunning) {
-    // 自機の上方向に弾を発射
     playerBullets.push({
       x: player.x + PLAYER_SIZE / 2,
       y: player.y,
@@ -69,8 +68,8 @@ document.addEventListener("keydown", (e) => {
     });
     e.preventDefault();
   }
-  // エンターキーで再スタート（ゲームオーバー後）
-  if (e.key === "Enter" && !gameRunning) {
+  // ゲームオーバー後にRキーで再スタート
+  if (e.key === "r" && !gameRunning) {
     initGame();
   }
 });
@@ -95,7 +94,6 @@ document.addEventListener("touchmove", (e) => {
 // ★ ゲームループ ★
 function gameLoop() {
   if (!gameRunning) {
-    // ゲーム終了時のメッセージ表示
     gameOverText.textContent = gameOutcome;
     gameOverText.style.display = "block";
     restartButton.style.display = "block";
@@ -148,10 +146,8 @@ function gameLoop() {
   bossBullets.forEach((bullet, index) => {
     bullet.x += bullet.dx;
     bullet.y += bullet.dy;
-    ctx.beginPath();
-    ctx.fillStyle = "red";
-    ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
-    ctx.fill();
+    // 桜の花弁のような弾を描画
+    drawSakuraBullet(bullet.x, bullet.y, 3);
     // 自機との衝突判定
     if (
       bullet.x > player.x && bullet.x < player.x + PLAYER_SIZE &&
@@ -170,6 +166,7 @@ function gameLoop() {
   // ★ 自機弾の更新＆描画 ★
   playerBullets.forEach((bullet, index) => {
     bullet.y += bullet.dy;
+    // 自機弾を白い円で描画
     ctx.beginPath();
     ctx.fillStyle = "white";
     ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
@@ -209,5 +206,43 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
+// ★ 桜の花びら描画関数 ★
+function drawSakuraBullet(x, y, size) {
+  ctx.save();
+  ctx.translate(x, y);
+  for (let i = 0; i < 5; i++) {
+    ctx.save();
+    ctx.rotate((i * 2 * Math.PI) / 5);
+    drawPetal(size);
+    ctx.restore();
+  }
+  // 中心部分（ハイライト）の描画
+  ctx.beginPath();
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPetal(size) {
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.bezierCurveTo(
+    -size * 0.12, -size * 0.3,
+    -size * 0.20, -size * 0.5,
+    0, -size * 0.65
+  );
+  ctx.bezierCurveTo(
+    size * 0.20, -size * 0.5,
+    size * 0.12, -size * 0.3,
+    0, 0
+  );
+  ctx.fillStyle = "pink";
+  ctx.fill();
+}
+
 // ★ 再プレイボタンの処理 ★
 restartButton.addEventListener("click", initGame);
+
+// ★ スペースキーで弾を発射、Rキーで再スタート ★
+document.addEvent
