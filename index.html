@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>弾除けゲーム</title>
+  <title>弾除けゲーム - ボス＆自機発射版</title>
   <style>
     /* 全体レイアウト */
     body {
@@ -12,7 +12,7 @@
       font-family: Arial, sans-serif;
       background-color: black;
       color: white;
-      overflow: hidden;  /* ページスクロールを防止 */
+      overflow: hidden;  /* ページスクロール防止 */
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -90,18 +90,19 @@
 </head>
 <body>
   <h1>弾除けゲーム</h1>
-  <p>PC: WASD / 矢印キーで移動　｜　スマホ: スワイプで移動（※スクロールは無効）</p>
+  <p>PC: WASD / 矢印キーで移動｜スペースキーで発射<br>
+     スマホ: スワイプで移動（※スクロール無効）</p>
   
   <!-- ゲーム画面・スコア・ボタンを内包するコンテナ -->
   <div id="gameContainer">
+    <button id="restartButton">もう一度プレイ</button>
     <canvas id="gameCanvas"></canvas>
     <div id="scoreDisplay">Score: 0.00秒</div>
     <div id="gameOverContainer">
-      <h2 id="gameOverText">Game Over!</h2>
-      <button id="restartButton">もう一度プレイ</button>
+      <h2 id="gameOverText"></h2>
     </div>
   </div>
-
+  
   <!-- ゲームロジック（モジュール方式） -->
   <script type="module" src="shooting_Game_Console.js"></script>
 </body>

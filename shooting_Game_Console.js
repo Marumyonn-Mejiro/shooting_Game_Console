@@ -5,51 +5,81 @@ const scoreDisplay = document.getElementById("scoreDisplay");
 const gameOverText = document.getElementById("gameOverText");
 const restartButton = document.getElementById("restartButton");
 
-// 定数（プレイヤーや弾のサイズ・速度）
+// 定数（プレイヤー・弾・移動速度など）
 const PLAYER_SIZE = 10;
 const BULLET_SIZE = 5;
 const BULLET_SPEED = 2;
 const PLAYER_SPEED = 4;
 
 // ゲーム関連の変数
-let player, bullets, keys, gameRunning, startTime;
+let player, boss, bossBullets, playerBullets, keys, gameRunning, startTime;
+let gameOutcome = ""; // "You Win!" または "Game Over!"
 
-// ★ ゲーム初期化関数 ★
+// ★ ゲーム初期化 ★
 function initGame() {
-  // キャンバスのサイズを画面に合わせて設定（幅は 95vw、最大 600px、縦は 60% 以内）
+  // キャンバスサイズの設定（画面サイズに合わせる）
   canvas.width = Math.min(window.innerWidth * 0.95, 600);
   canvas.height = Math.min(window.innerHeight * 0.6, 400);
   
-  // プレイヤー初期位置はキャンバス下部中央
+  // プレイヤーはキャンバス下部中央
   player = { x: canvas.width / 2, y: canvas.height - 30 };
-  bullets = [];
+  
+  // ボスは画面上部中央。初期サイズ、HP、発射間隔、最終発射時刻を設定。
+  boss = {
+    x: canvas.width / 2 - 20,
+    y: 20,
+    width: 40,
+    height: 20,
+    health: 3,
+    lastShotTime: 0,
+    shotInterval: 3000
+  };
+  
+  // 弾用配列の初期化
+  bossBullets = [];
+  playerBullets = [];
+  
   keys = {};
   gameRunning = true;
+  gameOutcome = "";
   startTime = new Date();
   
-  // スコア表示とゲームオーバー、再プレイボタンは初期状態に戻す
+  // 表示初期化
   scoreDisplay.textContent = "Score: 0.00秒";
   gameOverText.style.display = "none";
   restartButton.style.display = "none";
   
-  // ゲームループ開始
   gameLoop();
 }
 window.addEventListener("resize", initGame);
 initGame();
 
 // ★ キーボード操作 ★
-document.addEventListener("keydown", (e) => { keys[e.key] = true; });
+document.addEventListener("keydown", (e) => {
+  // 移動キーの状態記録
+  keys[e.key] = true;
+  // スペースキーで自機弾発射
+  if (e.key === " ") {
+    // 自機の上方向に弾を発射
+    playerBullets.push({
+      x: player.x + PLAYER_SIZE / 2,
+      y: player.y,
+      dx: 0,
+      dy: -5
+    });
+    e.preventDefault();
+  }
+});
 document.addEventListener("keyup", (e) => { keys[e.key] = false; });
 
-// ★ スマホ向け：スワイプ操作（かつページスクロールを防止） ★
+// ★ スマホ向け：スワイプ操作（スクロール防止） ★
 let touchStartX = 0, touchStartY = 0;
 document.addEventListener("touchstart", (e) => {
   touchStartX = e.touches[0].clientX;
   touchStartY = e.touches[0].clientY;
 });
 document.addEventListener("touchmove", (e) => {
-  e.preventDefault(); // ページ全体のスクロールを防止
+  e.preventDefault();
   let dx = e.touches[0].clientX - touchStartX;
   let dy = e.touches[0].clientY - touchStartY;
   touchStartX = e.touches[0].clientX;
@@ -60,52 +90,112 @@ document.addEventListener("touchmove", (e) => {
 
 // ★ ゲームループ ★
 function gameLoop() {
-  if (!gameRunning) return;
+  if (!gameRunning) {
+    // ゲーム終了時のメッセージ表示
+    gameOverText.textContent = gameOutcome;
+    gameOverText.style.display = "block";
+    restartButton.style.display = "block";
+    return;
+  }
   
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-  // プレイヤー移動
+  // 自機移動
   if (keys["ArrowLeft"] || keys["a"]) player.x -= PLAYER_SPEED;
   if (keys["ArrowRight"] || keys["d"]) player.x += PLAYER_SPEED;
   if (keys["ArrowUp"] || keys["w"]) player.y -= PLAYER_SPEED;
   if (keys["ArrowDown"] || keys["s"]) player.y += PLAYER_SPEED;
-  
-  // 画面端での移動制限
+  // 移動制限：自機は画面内に収める
   player.x = Math.max(0, Math.min(canvas.width - PLAYER_SIZE, player.x));
   player.y = Math.max(0, Math.min(canvas.height - PLAYER_SIZE, player.y));
   
-  // プレイヤー描画
+  // 自機描画
   ctx.fillStyle = "blue";
   ctx.fillRect(player.x, player.y, PLAYER_SIZE, PLAYER_SIZE);
   
-  // 弾の更新＆描画
-  bullets.forEach((b) => {
-    b.x += b.dx * BULLET_SPEED;
-    b.y += b.dy * BULLET_SPEED;
-    drawSakuraBullet(b.x, b.y, BULLET_SIZE * 4);
-    
-    // 衝突判定：プレイヤーとの当たり判定
+  // ★ ボスのランダム移動 ★
+  if (boss && boss.health > 0) {
+    // 毎フレーム、ランダムに少しずつ移動（水平・垂直）
+    boss.x += (Math.random() - 0.5) * 2;  // -1〜+1
+    boss.y += (Math.random() - 0.5) * 1;  // -0.5〜+0.5
+    // 移動範囲の制限：ボスは画面上部に留める（例：上半分内）
+    boss.x = Math.max(0, Math.min(canvas.width - boss.width, boss.x));
+    boss.y = Math.max(0, Math.min(canvas.height / 2 - boss.height, boss.y));
+  
+    // ★ ボスの発射処理 ★
+    if (Date.now() - boss.lastShotTime > boss.shotInterval) {
+      // 放射状（全方向）に弾を発射
+      const numBullets = 8;
+      for (let i = 0; i < numBullets; i++) {
+        let angle = (2 * Math.PI / numBullets) * i;
+        let speed = 3;
+        bossBullets.push({
+          x: boss.x + boss.width / 2,
+          y: boss.y + boss.height / 2,
+          dx: Math.cos(angle) * speed,
+          dy: Math.sin(angle) * speed
+        });
+      }
+      boss.lastShotTime = Date.now();
+    }
+  }
+  
+  // ★ ボス弾の更新＆描画 ★
+  bossBullets.forEach((bullet, index) => {
+    bullet.x += bullet.dx;
+    bullet.y += bullet.dy;
+    ctx.beginPath();
+    ctx.fillStyle = "red";
+    ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+    // 自機との衝突判定
     if (
-      b.x < player.x + PLAYER_SIZE &&
-      b.x + BULLET_SIZE > player.x &&
-      b.y < player.y + PLAYER_SIZE &&
-      b.y + BULLET_SIZE > player.y
+      bullet.x > player.x && bullet.x < player.x + PLAYER_SIZE &&
+      bullet.y > player.y && bullet.y < player.y + PLAYER_SIZE
     ) {
-      gameOver();
+      gameOutcome = "Game Over!";
+      gameRunning = false;
+    }
+    // 画面外なら削除
+    if (bullet.x < -BULLET_SIZE || bullet.x > canvas.width + BULLET_SIZE ||
+        bullet.y < -BULLET_SIZE || bullet.y > canvas.height + BULLET_SIZE) {
+      bossBullets.splice(index, 1);
     }
   });
   
-  // キャンバス外の弾は削除
-  bullets = bullets.filter((b) =>
-    b.x >= -BULLET_SIZE &&
-    b.x <= canvas.width + BULLET_SIZE &&
-    b.y >= -BULLET_SIZE &&
-    b.y <= canvas.height + BULLET_SIZE
-  );
+  // ★ 自機弾の更新＆描画 ★
+  playerBullets.forEach((bullet, index) => {
+    bullet.y += bullet.dy;
+    ctx.beginPath();
+    ctx.fillStyle = "white";
+    ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+    // 自機弾がボスに当たったら、ボスHPを減少
+    if (
+      boss && bullet.x > boss.x && bullet.x < boss.x + boss.width &&
+      bullet.y > boss.y && bullet.y < boss.y + boss.height
+    ) {
+      boss.health -= 1;
+      playerBullets.splice(index, 1);
+      if (boss.health <= 0) {
+        gameOutcome = "You Win!";
+        gameRunning = false;
+      }
+    }
+    // 画面外なら削除
+    if (bullet.y < 0) {
+      playerBullets.splice(index, 1);
+    }
+  });
   
-  // 弾幕発射（確率で発射）
-  if (Math.random() < 0.1) {
-    spawnBulletPattern();
+  // ★ ボスの描画 ★
+  if (boss && boss.health > 0) {
+    ctx.fillStyle = "red";
+    ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+    // ボスHP表示
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.fillText("HP: " + boss.health, boss.x, boss.y - 5);
   }
   
   // 生存時間（スコア）の更新表示
@@ -115,64 +205,12 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// ★ 弾幕発射：桜の花びらパターン ★
-function spawnBulletPattern() {
-  let centerX = Math.random() * canvas.width;
-  let centerY = 0;
-  let numBullets = 12;
-  let angleStep = Math.PI * 2 / numBullets;
-  for (let i = 0; i < numBullets; i++) {
-    let angle = i * angleStep;
-    bullets.push({
-      x: centerX,
-      y: centerY,
-      dx: Math.cos(angle),
-      dy: Math.sin(angle)
-    });
-  }
-}
-
-// ★ 桜の花びら描画 ★
-function drawSakuraBullet(x, y, size) {
-  ctx.save();
-  ctx.translate(x, y);
-  for (let i = 0; i < 5; i++) {
-    ctx.save();
-    ctx.rotate((i * 2 * Math.PI) / 5);
-    drawPetal(size);
-    ctx.restore();
-  }
-  // 中心のハイライト
-  ctx.beginPath();
-  ctx.fillStyle = "rgba(255,255,255,0.9)";
-  ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-function drawPetal(size) {
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.bezierCurveTo(
-    -size * 0.12, -size * 0.3,
-    -size * 0.20, -size * 0.5,
-    0, -size * 0.65
-  );
-  ctx.bezierCurveTo(
-    size * 0.20, -size * 0.5,
-    size * 0.12, -size * 0.3,
-    0, 0
-  );
-  ctx.fillStyle = "pink";
-  ctx.fill();
-}
-
-// ★ ゲームオーバー処理 ★
-function gameOver() {
-  gameRunning = false;
-  gameOverText.style.display = "block";
-  restartButton.style.display = "block";
-}
-
 // ★ 再プレイボタンの処理 ★
 restartButton.addEventListener("click", initGame);
+
+// ★ スペースキーで再スタート ★
+document.addEventListener("keydown", (e) => {
+  if (e.key === " " && !gameRunning) {
+    initGame();
+  }
+});
