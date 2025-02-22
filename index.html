@@ -28,7 +28,7 @@
     p {
       text-align: center;
       margin: 5px 0 15px;
-      font-size: 1rem;
+      line-height: 1.5;
     }
     /* ゲーム画面と操作UIを内包するコンテナ */
     #gameContainer {
@@ -86,19 +86,16 @@
         font-size: 1.3rem;
         padding: 8px 16px;
       }
-      p {
-        font-size: 0.9rem;
-      }
     }
   </style>
 </head>
 <body>
   <h1>弾除けゲーム</h1>
   <p>
-    操作方法:<br>
-    ・PC: WASD / 矢印キーで移動、プレイヤーは自動的に0.1秒間隔で上方へ発射<br>
-    ・再スタート: ゲームオーバー後、Rキーまたは上部の「もう一度プレイ」ボタン<br>
-    ・スマホ: スワイプで移動（スクロール無効）
+    【操作方法】<br>
+    PC: WASD / 矢印キーで移動｜スペースキーで弾を発射<br>
+    ゲームオーバー後はRキーまたは上部「もう一度プレイ」ボタンで再スタート<br>
+    スマホ: スワイプで移動（※スクロール無効）
   </p>
   
   <!-- ゲーム画面・スコア・ボタンを内包するコンテナ -->
@@ -111,7 +108,7 @@
     </div>
   </div>
   
-  <!-- ゲームロジック -->
+  <!-- ゲームロジック（モジュール方式） -->
   <script type="module" src="shooting_Game_Console.js"></script>
 </body>
 </html>
