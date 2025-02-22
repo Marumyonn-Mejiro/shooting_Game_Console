@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>弾除けゲーム - ボス＆自機発射版</title>
+  <title>弾除けゲーム - ボス＆自機自動発射版</title>
   <style>
     /* 全体レイアウト */
     body {
@@ -28,6 +28,7 @@
     p {
       text-align: center;
       margin: 5px 0 15px;
+      font-size: 1rem;
     }
     /* ゲーム画面と操作UIを内包するコンテナ */
     #gameContainer {
@@ -45,16 +46,6 @@
       width: 100%;
       height: auto;
       display: block;
-    }
-    /* FIREボタン（自機発射用） */
-    #fireButton {
-      margin: 8px 0;
-      padding: 10px 20px;
-      font-size: 1.5rem;
-      background-color: pink;
-      border: none;
-      color: black;
-      cursor: pointer;
     }
     /* スコア表示 */
     #scoreDisplay {
@@ -91,33 +82,36 @@
       h1 {
         font-size: 1.8rem;
       }
-      #fireButton, #restartButton {
+      #restartButton {
         font-size: 1.3rem;
         padding: 8px 16px;
+      }
+      p {
+        font-size: 0.9rem;
       }
     }
   </style>
 </head>
 <body>
   <h1>弾除けゲーム</h1>
-  <p>操作方法:<br>
-     PC: WASD/矢印キーで移動｜FIREボタンで発射<br>
-     スマホ: スワイプで移動（※スクロール無効）</p>
+  <p>
+    操作方法:<br>
+    ・PC: WASD / 矢印キーで移動、プレイヤーは自動的に0.1秒間隔で上方へ発射<br>
+    ・再スタート: ゲームオーバー後、Rキーまたは上部の「もう一度プレイ」ボタン<br>
+    ・スマホ: スワイプで移動（スクロール無効）
+  </p>
   
   <!-- ゲーム画面・スコア・ボタンを内包するコンテナ -->
   <div id="gameContainer">
-    <!-- 再スタートボタン（ゲームオーバー後） -->
     <button id="restartButton">もう一度プレイ</button>
     <canvas id="gameCanvas"></canvas>
-    <!-- 自機発射ボタン -->
-    <button id="fireButton">FIRE</button>
-    <div id="scoreDisplay">Score: 0.00秒 | 敵撃破数: 0</div>
+    <div id="scoreDisplay">Score: 0.00秒</div>
     <div id="gameOverContainer">
       <h2 id="gameOverText"></h2>
     </div>
   </div>
   
-  <!-- ゲームロジック（モジュール方式） -->
+  <!-- ゲームロジック -->
   <script type="module" src="shooting_Game_Console.js"></script>
 </body>
 </html>
