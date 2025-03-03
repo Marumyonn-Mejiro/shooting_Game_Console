@@ -10,65 +10,68 @@ const PLAYER_SIZE = 10;
 const BULLET_SIZE = 5;
 const BULLET_SPEED = 2;
 const PLAYER_SPEED = 4;
-const PLAYER_BULLET_SPEED = -5;
-const BOSS_BASE_HP = 3;  // 初回HP = 3
 
-// ゲーム関連変数
+// ゲーム関連の変数
 let player, boss, bossBullets, playerBullets, keys, gameRunning, startTime;
-let enemyDefeatedCount = 0; // ボス撃破回数
-let gameOutcome = "";       // ゲームオーバー時の結果
+let gameOutcome = ""; // "You Win!" または "Game Over!"
+let enemyDefeatedCount = 0; // 敵撃破数
+let playerFireInterval = null; // 自機自動発射用タイマー
 
-// ボスの移動方向更新タイマー、及び自機自動発射タイマー
-let bossDirectionInterval;
-let playerFireInterval;
+// 色設定用（通常ボス用の候補）
+const normalBossColors = ["red", "green", "blue", "purple", "orange", "cyan", "magenta"];
 
-// ボスの移動方向（単位ベクトル×速度）
-let bossDirection = { dx: 0, dy: 0 };
+// ランダムな色を返す
+function getRandomColor() {
+  return normalBossColors[Math.floor(Math.random() * normalBossColors.length)];
+}
 
-// ★ ボスの外観更新 ★
-// 倒された回数に応じて、HP, 発射間隔, 移動速度、色を変更
-function updateBossAppearance() {
-  if (enemyDefeatedCount % 5 === 0 && enemyDefeatedCount > 0) {
-    // 5回に1回の強化ボス：七色に光る（rainbow効果）、発射間隔短縮、速度アップ
-    boss.rainbow = true;
-    boss.shotInterval = 500;
-    boss.speed = 3;
+// ★ ボス描画時の色設定 ★
+function drawBoss(boss) {
+  // 難易度強めボスの場合（5回ごと）
+  if (boss.color === "rainbow") {
+    const rainbowColors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
+    const index = Math.floor((Date.now() / 200) % rainbowColors.length);
+    ctx.fillStyle = rainbowColors[index];
   } else {
-    boss.rainbow = false;
-    boss.shotInterval = 1000;
-    boss.speed = 2;
-    const colors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
-    boss.color = colors[Math.floor(Math.random() * colors.length)];
+    ctx.fillStyle = boss.color;
   }
+  ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+  // HP表示
+  ctx.fillStyle = "white";
+  ctx.font = "12px Arial";
+  ctx.fillText("HP: " + boss.health, boss.x, boss.y - 5);
 }
 
 // ★ ゲーム初期化 ★
 function initGame() {
-  // ゲーム開始時、倒した敵の数をリセット（今回の仕様では再スタートでリセットする）
-  enemyDefeatedCount = 0;
-  
-  // キャンバスサイズの設定
+  // キャンバスサイズ設定
   canvas.width = Math.min(window.innerWidth * 0.95, 600);
   canvas.height = Math.min(window.innerHeight * 0.6, 400);
   
-  // 自機はキャンバス下部中央
+  // プレイヤーは下部中央
   player = { x: canvas.width / 2, y: canvas.height - 30 };
   
-  // ボス初期設定
+  // 初回は敵撃破数リセット
+  enemyDefeatedCount = 0;
+  
+  // ボス設定：HPは (撃破数+1)*3、色はランダム（通常ボス）
   boss = {
     x: canvas.width / 2 - 20,
     y: 20,
     width: 40,
     height: 20,
-    health: (enemyDefeatedCount + 1) * BOSS_BASE_HP,
+    health: (enemyDefeatedCount + 1) * 3,
     lastShotTime: 0,
-    shotInterval: 1000, // 仮設定（updateBossAppearanceで上書き）
-    speed: 2
+    shotInterval: 1000, // 発射間隔を短く（タイトな弾幕）
+    vx: 0,
+    vy: 0,
+    lastDirectionChange: Date.now(),
+    color: getRandomColor()
   };
-  updateBossAppearance();
   
-  // 弾配列初期化
+  // ボス自動発射の弾幕は大量に（16発）
   bossBullets = [];
+  // 自機弾用配列
   playerBullets = [];
   
   keys = {};
@@ -76,33 +79,24 @@ function initGame() {
   gameOutcome = "";
   startTime = new Date();
   
-  // 表示初期化
-  scoreDisplay.textContent = "Score: 0.00秒";
-  gameOverText.style.display = "none";
-  restartButton.style.display = "none";
-  
-  // 自機自動発射開始（0.1秒間隔）
-  if (playerFireInterval) clearInterval(playerFireInterval);
+  // タイマーは初期化時にクリア
+  if (playerFireInterval !== null) clearInterval(playerFireInterval);
+  // 自機は0.1秒間隔で常に前方へ自動発射
   playerFireInterval = setInterval(() => {
     if (gameRunning) {
       playerBullets.push({
         x: player.x + PLAYER_SIZE / 2,
         y: player.y,
         dx: 0,
-        dy: PLAYER_BULLET_SPEED
+        dy: -5
       });
     }
   }, 100);
   
-  // ボス移動方向更新（0.5秒ごと）
-  if (bossDirectionInterval) clearInterval(bossDirectionInterval);
-  bossDirectionInterval = setInterval(() => {
-    if (gameRunning && boss && boss.health > 0) {
-      let angle = Math.random() * 2 * Math.PI;
-      bossDirection.dx = Math.cos(angle) * boss.speed;
-      bossDirection.dy = Math.sin(angle) * boss.speed;
-    }
-  }, 500);
+  // 表示初期化
+  scoreDisplay.textContent = `Score: 0.00秒 | 敵撃破数: ${enemyDefeatedCount}`;
+  gameOverText.style.display = "none";
+  restartButton.style.display = "none";
   
   gameLoop();
 }
@@ -112,7 +106,8 @@ initGame();
 // ★ キーボード操作 ★
 document.addEventListener("keydown", (e) => {
   keys[e.key] = true;
-  // スペースキーで自機弾発射は自機自動発射仕様のため無視
+  // スペースキーは自動発射専用（ここでは何もしない）
+  // ゲームオーバー後にRキーで再スタート
   if (e.key === "r" && !gameRunning) {
     initGame();
   }
@@ -138,7 +133,7 @@ document.addEventListener("touchmove", (e) => {
 // ★ ゲームループ ★
 function gameLoop() {
   if (!gameRunning) {
-    gameOverText.textContent = gameOutcome + `（敵撃破数: ${enemyDefeatedCount}）`;
+    gameOverText.textContent = gameOutcome;
     gameOverText.style.display = "block";
     restartButton.style.display = "block";
     return;
@@ -146,40 +141,44 @@ function gameLoop() {
   
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-  // 自機移動（WASD/矢印キー）
+  // 自機移動（ユーザー入力）
   if (keys["ArrowLeft"] || keys["a"]) player.x -= PLAYER_SPEED;
   if (keys["ArrowRight"] || keys["d"]) player.x += PLAYER_SPEED;
   if (keys["ArrowUp"] || keys["w"]) player.y -= PLAYER_SPEED;
   if (keys["ArrowDown"] || keys["s"]) player.y += PLAYER_SPEED;
-  // 自機移動範囲
+  // 自機位置の制限
   player.x = Math.max(0, Math.min(canvas.width - PLAYER_SIZE, player.x));
   player.y = Math.max(0, Math.min(canvas.height - PLAYER_SIZE, player.y));
   
-  // 自機描画（円形）
-  ctx.beginPath();
+  // 自機描画（矩形）
   ctx.fillStyle = "blue";
-  let playerCenter = { x: player.x + PLAYER_SIZE/2, y: player.y + PLAYER_SIZE/2 };
-  let playerRadius = PLAYER_SIZE/2;
-  ctx.arc(playerCenter.x, playerCenter.y, playerRadius, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.fillRect(player.x, player.y, PLAYER_SIZE, PLAYER_SIZE);
   
   // ★ ボスの移動 ★
   if (boss && boss.health > 0) {
-    boss.x += bossDirection.dx;
-    boss.y += bossDirection.dy;
-    // 移動範囲：画面上半分内
+    // 0.5秒間隔で新しい移動方向を設定
+    if (Date.now() - boss.lastDirectionChange >= 500) {
+      // 移動速度はランダム（例えば -2〜+2 ピクセル/フレーム）
+      boss.vx = (Math.random() * 4 - 2);
+      boss.vy = (Math.random() * 4 - 2);
+      boss.lastDirectionChange = Date.now();
+    }
+    // 位置更新
+    boss.x += boss.vx;
+    boss.y += boss.vy;
+    // 移動範囲の制限：ボスは画面上半分に留める
     boss.x = Math.max(0, Math.min(canvas.width - boss.width, boss.x));
     boss.y = Math.max(0, Math.min(canvas.height/2 - boss.height, boss.y));
-    
+  
     // ★ ボスの発射処理 ★
-    if (Date.now() - boss.lastShotTime > boss.shotInterval) {
-      const numBullets = 20;  // タイトな桜の花びら弾幕
+    if (Date.now() - boss.lastShotTime >= boss.shotInterval) {
+      const numBullets = 16;  // タイトな弾幕：16発
       for (let i = 0; i < numBullets; i++) {
         let angle = (2 * Math.PI / numBullets) * i;
         let speed = 3;
         bossBullets.push({
-          x: boss.x + boss.width/2,
-          y: boss.y + boss.height/2,
+          x: boss.x + boss.width / 2,
+          y: boss.y + boss.height / 2,
           dx: Math.cos(angle) * speed,
           dy: Math.sin(angle) * speed
         });
@@ -192,20 +191,20 @@ function gameLoop() {
   bossBullets.forEach((bullet, index) => {
     bullet.x += bullet.dx;
     bullet.y += bullet.dy;
+    // 桜の花びら型の弾を描画
     drawSakuraBullet(bullet.x, bullet.y, 3);
-    // 円同士の当たり判定
-    let dx = bullet.x - playerCenter.x;
-    let dy = bullet.y - playerCenter.y;
-    let dist = Math.sqrt(dx*dx + dy*dy);
-    if (dist < (playerRadius + 3)) {
+    // 自機との当たり判定（描画に応じた単純な矩形内判定）
+    if (
+      bullet.x > player.x && bullet.x < player.x + PLAYER_SIZE &&
+      bullet.y > player.y && bullet.y < player.y + PLAYER_SIZE
+    ) {
       gameOutcome = "Game Over!";
       gameRunning = false;
     }
+    // 画面外なら削除
     if (
-      bullet.x < -BULLET_SIZE ||
-      bullet.x > canvas.width + BULLET_SIZE ||
-      bullet.y < -BULLET_SIZE ||
-      bullet.y > canvas.height + BULLET_SIZE
+      bullet.x < -BULLET_SIZE || bullet.x > canvas.width + BULLET_SIZE ||
+      bullet.y < -BULLET_SIZE || bullet.y > canvas.height + BULLET_SIZE
     ) {
       bossBullets.splice(index, 1);
     }
@@ -214,55 +213,45 @@ function gameLoop() {
   // ★ 自機弾の更新＆描画 ★
   playerBullets.forEach((bullet, index) => {
     bullet.y += bullet.dy;
+    // 白い円で描画
     ctx.beginPath();
     ctx.fillStyle = "white";
     ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
     ctx.fill();
-    // 当たり判定：自機弾とボス（矩形判定＋補完）
+    // 当たり判定：自機弾がボスの描画領域に入れば命中
     if (
-      boss &&
-      bullet.x > boss.x && bullet.x < boss.x + boss.width &&
+      boss && bullet.x > boss.x && bullet.x < boss.x + boss.width &&
       bullet.y > boss.y && bullet.y < boss.y + boss.height
     ) {
       boss.health -= 1;
       playerBullets.splice(index, 1);
+      // ボスが倒れたとき
       if (boss.health <= 0) {
         enemyDefeatedCount++;
-        // 次回ボスのHPは (撃破回数+1)*BOSS_BASE_HP
-        boss.health = (enemyDefeatedCount + 1) * BOSS_BASE_HP;
-        // 更新：難易度強化する場合、5回に1回はrainbowモード
-        updateBossAppearance();
-        // ボスの出現位置リセット
-        boss.x = canvas.width/2 - boss.width/2 + (Math.random()-0.5)*50;
-        boss.y = 20 + (Math.random()-0.5)*20;
+        // 新たなボスHPは (撃破数+1)*3
+        boss.health = (enemyDefeatedCount + 1) * 3;
+        // ボス色を変更：5回ごとに難易度強め（rainbow:七色）
+        if ((enemyDefeatedCount + 1) % 5 === 0) {
+          boss.color = "rainbow";
+        } else {
+          boss.color = getRandomColor();
+        }
+        // 敵撃破時、ボスをランダムな位置に再配置
+        boss.x = Math.random() * (canvas.width - boss.width);
+        boss.y = Math.random() * (canvas.height/2 - boss.height);
+        // 方向変更タイミングリセット
+        boss.lastDirectionChange = Date.now();
       }
     }
+    // 画面外なら削除
     if (bullet.y < 0) {
       playerBullets.splice(index, 1);
     }
   });
   
-  // ★ ボスの描画 ★
+  // ★ ボス描画 ★
   if (boss && boss.health > 0) {
-    if (boss.rainbow) {
-      // 七色に光るrainbowボス：線形グラデーションを利用
-      let grad = ctx.createLinearGradient(boss.x, boss.y, boss.x + boss.width, boss.y + boss.height);
-      grad.addColorStop(0, "red");
-      grad.addColorStop(0.16, "orange");
-      grad.addColorStop(0.33, "yellow");
-      grad.addColorStop(0.50, "green");
-      grad.addColorStop(0.66, "blue");
-      grad.addColorStop(0.83, "indigo");
-      grad.addColorStop(1, "violet");
-      ctx.fillStyle = grad;
-    } else {
-      ctx.fillStyle = boss.color;
-    }
-    ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
-    // ボスHP表示
-    ctx.fillStyle = "white";
-    ctx.font = "12px Arial";
-    ctx.fillText("HP: " + boss.health, boss.x, boss.y - 5);
+    drawBoss(boss);
   }
   
   // ★ 敵撃破数表示 ★
@@ -272,7 +261,7 @@ function gameLoop() {
   
   // 生存時間（スコア）の更新表示
   const elapsedTime = (new Date() - startTime) / 1000;
-  scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒`;
+  scoreDisplay.textContent = `Score: ${elapsedTime.toFixed(2)}秒 | 敵撃破数: ${enemyDefeatedCount}`;
   
   requestAnimationFrame(gameLoop);
 }
@@ -287,6 +276,7 @@ function drawSakuraBullet(x, y, size) {
     drawPetal(size);
     ctx.restore();
   }
+  // 中心のハイライト
   ctx.beginPath();
   ctx.fillStyle = "rgba(255,255,255,0.9)";
   ctx.arc(0, 0, size * 0.4, 0, Math.PI * 2);
@@ -311,31 +301,22 @@ function drawPetal(size) {
   ctx.fill();
 }
 
-// ★ ボス外観更新 ★
-function updateBossAppearance() {
-  if (enemyDefeatedCount % 5 === 0 && enemyDefeatedCount > 0) {
-    // 5回に1回：rainbowモード（難易度強化）
-    boss.rainbow = true;
-    boss.shotInterval = 500;
-    boss.speed = 3;
-  } else {
-    boss.rainbow = false;
-    boss.shotInterval = 1000;
-    boss.speed = 2;
-    const colors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
-    boss.color = colors[Math.floor(Math.random() * colors.length)];
-  }
+// ★ ランダムな色を返す関数 ★
+function getRandomColor() {
+  const colors = ["red", "green", "blue", "purple", "orange", "cyan", "magenta"];
+  return colors[Math.floor(Math.random() * colors.length)];
 }
 
 // ★ 再プレイボタンの処理 ★
-restartButton.addEventListener("click", initGame);
+restartButton.addEventListener("click", () => {
+  // 再スタート時は撃破数リセット
+  enemyDefeatedCount = 0;
+  initGame();
+});
 
-// ★ キー操作：スペースキーで発射、Rキーで再スタート ★
+// ★ スペースキーで弾発射、Rキーで再スタート ★
+// ※ 自機の弾は自動発射されるため、ここでは再スタートのみ対応
 document.addEventListener("keydown", (e) => {
-  if (e.key === " " && gameRunning) {
-    // 自機自動発射仕様のため、手動発射はしない
-    e.preventDefault();
-  }
   if (e.key === "r" && !gameRunning) {
     initGame();
   }

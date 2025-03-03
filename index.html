@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>弾除けゲーム - ボス＆自機自動発射版</title>
+  <title>弾除けゲーム - ボス＆自機発射版</title>
   <style>
     /* 全体レイアウト */
     body {
@@ -28,7 +28,6 @@
     p {
       text-align: center;
       margin: 5px 0 15px;
-      line-height: 1.5;
     }
     /* ゲーム画面と操作UIを内包するコンテナ */
     #gameContainer {
@@ -47,7 +46,7 @@
       height: auto;
       display: block;
     }
-    /* スコア表示 */
+    /* スコア・撃破数表示 */
     #scoreDisplay {
       margin: 10px 0;
       font-size: 1.2rem;
@@ -93,22 +92,22 @@
   <h1>弾除けゲーム</h1>
   <p>
     【操作方法】<br>
-    PC: WASD / 矢印キーで移動｜スペースキーで自機弾発射<br>
+    PC: WASD / 矢印キーで移動｜スペースキーで弾発射（自機は0.1秒間隔で自動発射）<br>
     ゲームオーバー後はRキーまたは上部「もう一度プレイ」ボタンで再スタート<br>
-    スマホ: スワイプで移動（※スクロール無効）
+    スマホ: スワイプで移動（スクロール無効）
   </p>
   
   <!-- ゲーム画面・スコア・ボタンを内包するコンテナ -->
   <div id="gameContainer">
     <button id="restartButton">もう一度プレイ</button>
     <canvas id="gameCanvas"></canvas>
-    <div id="scoreDisplay">Score: 0.00秒</div>
+    <div id="scoreDisplay">Score: 0.00秒 | 敵撃破数: 0</div>
     <div id="gameOverContainer">
       <h2 id="gameOverText"></h2>
     </div>
   </div>
   
-  <!-- ゲームロジック（モジュール方式） -->
+  <!-- ゲームロジック -->
   <script type="module" src="shooting_Game_Console.js"></script>
 </body>
 </html>
