@@ -12,7 +12,7 @@
       font-family: Arial, sans-serif;
       background-color: black;
       color: white;
-      overflow: hidden;  /* ページスクロール防止 */
+      overflow: hidden; /* ページスクロール防止 */
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -28,6 +28,7 @@
     p {
       text-align: center;
       margin: 5px 0 15px;
+      line-height: 1.5;
     }
     /* ゲーム画面と操作UIを内包するコンテナ */
     #gameContainer {
@@ -46,7 +47,7 @@
       height: auto;
       display: block;
     }
-    /* スコア・撃破数表示 */
+    /* スコア・敵撃破数表示 */
     #scoreDisplay {
       margin: 10px 0;
       font-size: 1.2rem;
@@ -73,7 +74,7 @@
       color: black;
       cursor: pointer;
     }
-    /* スマホなど画面幅が狭い場合の調整 */
+    /* スマホ用調整 */
     @media (max-width: 600px) {
       #gameContainer {
         width: 90vw;
@@ -91,10 +92,11 @@
 <body>
   <h1>弾除けゲーム</h1>
   <p>
-    【操作方法】<br>
-    PC: WASD / 矢印キーで移動｜スペースキーで弾発射（自機は0.1秒間隔で自動発射）<br>
-    ゲームオーバー後はRキーまたは上部「もう一度プレイ」ボタンで再スタート<br>
-    スマホ: スワイプで移動（スクロール無効）
+    操作方法:<br>
+    PC: WASD／矢印キーで移動｜自機は0.1秒間隔で自動発射（上方向）<br>
+    スペースキーは手動発射（無効化済み）<br>
+    ゲームオーバー後はRキーまたは【もう一度プレイ】ボタンで再スタート<br>
+    スマホ: スワイプで移動（※スクロール無効）
   </p>
   
   <!-- ゲーム画面・スコア・ボタンを内包するコンテナ -->
@@ -107,7 +109,7 @@
     </div>
   </div>
   
-  <!-- ゲームロジック -->
+  <!-- ゲームロジック（モジュール方式） -->
   <script type="module" src="shooting_Game_Console.js"></script>
 </body>
 </html>
