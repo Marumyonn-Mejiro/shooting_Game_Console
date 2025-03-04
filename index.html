@@ -3,53 +3,58 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>弾除けゲーム - ボス＆自機発射版</title>
+  <title>弾除けゲーム - Boss Battle Edition</title>
   <style>
-    /* 全体レイアウト */
+    /* 全体レイアウト・背景 */
     body {
       margin: 0;
       padding: 0;
       font-family: Arial, sans-serif;
       background-color: black;
       color: white;
-      overflow: hidden;  /* ページスクロール防止 */
+      overflow: hidden; /* ページスクロール防止 */
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       min-height: 100vh;
     }
-    h1 {
-      color: pink;
-      margin: 10px 0;
-      font-size: 2rem;
-      text-align: center;
-    }
-    p {
-      text-align: center;
-      margin: 5px 0 15px;
-    }
-    /* ゲーム画面と操作UIを内包するコンテナ */
-    #gameContainer {
+    /* ヘッダー部分：タイトル、操作説明、再プレイボタン（常時上部に表示） */
+    header {
       width: 95vw;
       max-width: 600px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      text-align: center;
+      margin: 10px 0;
     }
-    /* ボタン類 */
-    .gameButton {
-      margin: 5px;
-      padding: 10px 20px;
-      font-size: 1.5rem;
+    header h1 {
+      color: pink;
+      font-size: 2rem;
+      margin: 5px 0;
+    }
+    header p {
+      font-size: 0.9rem;
+      margin: 5px 0;
+    }
+    #restartButtonGlobal {
+      margin-top: 5px;
+      padding: 8px 16px;
+      font-size: 1.3rem;
       background-color: pink;
       border: none;
       color: black;
       cursor: pointer;
       display: none;
     }
-    /* キャンバスは画面サイズに合わせて可変 */
+    /* ゲーム画面・スコア表示 */
+    #gameContainer {
+      width: 95vw;
+      max-width: 600px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
     canvas {
       border: 2px solid white;
       background-color: black;
@@ -57,57 +62,68 @@
       height: auto;
       display: block;
     }
-    /* スコア表示 */
-    #scoreDisplay {
-      margin: 10px 0;
+    #scoreDisplay, #bossDefeatDisplay {
+      margin: 8px 0;
       font-size: 1.2rem;
       text-align: center;
     }
-    /* ゲームオーバー時の表示エリア */
-    #gameOverContainer {
+    /* ゲームオーバー/ボスクリア時のUI（中央下部） */
+    #overlay {
+      position: absolute;
+      bottom: 10px;
+      width: 100%;
       text-align: center;
-      margin-top: 10px;
+      pointer-events: none;
     }
-    #gameOverText {
+    #gameOverText, #bossClearText {
       font-size: 2rem;
       color: red;
       display: none;
       margin: 5px 0;
     }
-    /* スマホなど画面幅が狭い場合の調整 */
+    /* 「次のボスへ」ボタンはオーバーレイに表示（ゲームクリア時のみ） */
+    #nextBossButton {
+      margin-top: 5px;
+      padding: 8px 16px;
+      font-size: 1.3rem;
+      background-color: yellow;
+      border: none;
+      color: black;
+      cursor: pointer;
+      display: none;
+      pointer-events: auto;
+    }
+    /* スマホ用レイアウト */
     @media (max-width: 600px) {
-      #gameContainer {
-        width: 90vw;
-      }
-      h1 {
-        font-size: 1.8rem;
-      }
-      .gameButton {
-        font-size: 1.3rem;
-        padding: 8px 16px;
-      }
+      header h1 { font-size: 1.8rem; }
+      #restartButtonGlobal, #nextBossButton { font-size: 1.2rem; padding: 6px 12px; }
     }
   </style>
 </head>
 <body>
-  <h1>弾除けゲーム</h1>
-  <p>
-    【操作方法】<br>
-    PC: WASD / 矢印キーで移動｜自機は常に0.1秒間隔で上方向へ自動発射＆スペースキーで即時発射<br>
-    ゲームオーバー後: Rキーで再スタート<br>
-    スマホ: スワイプで移動（※スクロール無効）
-  </p>
+  <!-- ヘッダー：タイトル、操作説明、グローバル再プレイボタン（ゲーム全体リセット用） -->
+  <header>
+    <h1>弾除けゲーム - Boss Battle Edition</h1>
+    <p>
+      【操作方法】<br>
+      ・移動：PCの場合は WASD または 矢印キー、スマホの場合はスワイプで操作<br>
+      ・発射：プレイヤーは常に0.1秒間隔で上方向へ自動発射（スペースキーで停止/再開はしません）<br>
+      ・ゲームオーバー後は【スペースキー】または【Rキー】で再スタート<br>
+      ・ボス撃破後は「次のボスへ」ボタンをクリックまたは【スペースキー】【Rキー】で次のボスへ進む
+    </p>
+    <button id="restartButtonGlobal">もう一度プレイ（全体リセット）</button>
+  </header>
   
-  <!-- ゲーム画面・スコア・ボタンを内包するコンテナ -->
+  <!-- ゲームエリア -->
   <div id="gameContainer">
-    <div>
-      <button id="nextBossButton" class="gameButton">次のボスへ</button>
-      <button id="restartButton" class="gameButton">もう一度プレイ</button>
-    </div>
     <canvas id="gameCanvas"></canvas>
-    <div id="scoreDisplay">Score: 0.00秒　｜　敵撃破数: 0</div>
-    <div id="gameOverContainer">
-      <h2 id="gameOverText"></h2>
+    <div id="scoreDisplay">Score: 0.00秒</div>
+    <div id="bossDefeatDisplay">Boss撃破数: 0</div>
+    <!-- オーバーレイ：ゲームオーバーまたはボスクリア時のメッセージ＆次のボスへボタン -->
+    <div id="overlay">
+      <div id="gameOverText"></div>
+      <div id="bossClearText"></div>
+      <button id="nextBossButton">次のボスへ</button>
     </div>
   </div>
   
