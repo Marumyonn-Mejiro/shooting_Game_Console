@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>弾除けゲーム - ボス＆自機発射版</title>
+  <title>弾除けゲーム - Boss Battle</title>
   <style>
     /* 全体レイアウト */
     body {
@@ -12,7 +12,7 @@
       font-family: Arial, sans-serif;
       background-color: black;
       color: white;
-      overflow: hidden; /* ページスクロール防止 */
+      overflow: hidden;  /* ページスクロール防止 */
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -28,7 +28,6 @@
     p {
       text-align: center;
       margin: 5px 0 15px;
-      line-height: 1.5;
     }
     /* ゲーム画面と操作UIを内包するコンテナ */
     #gameContainer {
@@ -47,7 +46,7 @@
       height: auto;
       display: block;
     }
-    /* スコア・敵撃破数表示 */
+    /* スコア・ボス倒した回数表示 */
     #scoreDisplay {
       margin: 10px 0;
       font-size: 1.2rem;
@@ -64,7 +63,8 @@
       display: none;
       margin: 5px 0;
     }
-    #restartButton {
+    /* ボタン類 */
+    #restartButton, #nextBossButton {
       display: none;
       margin-top: 10px;
       padding: 10px 20px;
@@ -74,7 +74,7 @@
       color: black;
       cursor: pointer;
     }
-    /* スマホ用調整 */
+    /* スマホなど画面幅が狭い場合の調整 */
     @media (max-width: 600px) {
       #gameContainer {
         width: 90vw;
@@ -82,7 +82,7 @@
       h1 {
         font-size: 1.8rem;
       }
-      #restartButton {
+      #restartButton, #nextBossButton {
         font-size: 1.3rem;
         padding: 8px 16px;
       }
@@ -93,17 +93,21 @@
   <h1>弾除けゲーム</h1>
   <p>
     操作方法:<br>
-    PC: WASD／矢印キーで移動｜自機は0.1秒間隔で自動発射（上方向）<br>
-    スペースキーは手動発射（無効化済み）<br>
-    ゲームオーバー後はRキーまたは【もう一度プレイ】ボタンで再スタート<br>
-    スマホ: スワイプで移動（※スクロール無効）
+    PC: WASD/矢印キーで移動｜スペースキーで発射<br>
+    ゲームオーバー時はRキーで再スタート（再スタート時は敵撃破数リセット）<br>
+    ボス撃破時は「次のボスへ」ボタンを押して次のボスに挑戦
+    <br>
+    スマホ: スワイプで移動（スクロール無効）
   </p>
   
   <!-- ゲーム画面・スコア・ボタンを内包するコンテナ -->
   <div id="gameContainer">
-    <button id="restartButton">もう一度プレイ</button>
+    <div>
+      <button id="restartButton">もう一度プレイ</button>
+      <button id="nextBossButton">次のボスへ</button>
+    </div>
     <canvas id="gameCanvas"></canvas>
-    <div id="scoreDisplay">Score: 0.00秒 | 敵撃破数: 0</div>
+    <div id="scoreDisplay">Score: 0.00秒 | Boss Defeated: 0</div>
     <div id="gameOverContainer">
       <h2 id="gameOverText"></h2>
     </div>
