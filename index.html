@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>弾除けゲーム - Boss Challenge</title>
+  <title>弾除けゲーム - ボス＆自機発射版</title>
   <style>
     /* 全体レイアウト */
     body {
@@ -28,7 +28,6 @@
     p {
       text-align: center;
       margin: 5px 0 15px;
-      line-height: 1.4;
     }
     /* ゲーム画面と操作UIを内包するコンテナ */
     #gameContainer {
@@ -39,20 +38,16 @@
       flex-direction: column;
       align-items: center;
     }
-    /* ボタンコンテナ */
-    #buttonContainer {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 5px;
-    }
-    button {
+    /* ボタン類 */
+    .gameButton {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 1.5rem;
       background-color: pink;
       border: none;
       color: black;
-      padding: 8px 16px;
-      font-size: 1.3rem;
       cursor: pointer;
+      display: none;
     }
     /* キャンバスは画面サイズに合わせて可変 */
     canvas {
@@ -79,7 +74,7 @@
       display: none;
       margin: 5px 0;
     }
-    /* スマホ調整 */
+    /* スマホなど画面幅が狭い場合の調整 */
     @media (max-width: 600px) {
       #gameContainer {
         width: 90vw;
@@ -87,9 +82,9 @@
       h1 {
         font-size: 1.8rem;
       }
-      button {
-        font-size: 1.1rem;
-        padding: 6px 12px;
+      .gameButton {
+        font-size: 1.3rem;
+        padding: 8px 16px;
       }
     }
   </style>
@@ -97,23 +92,26 @@
 <body>
   <h1>弾除けゲーム</h1>
   <p>
-    操作方法:<br>
-    PC: WASD／矢印キーで移動｜スペースキーで発射（自動発射：0.1秒間隔）｜ゲームオーバー後はRキーで再スタート<br>
-    スマホ: スワイプで移動（スクロール無効）
+    【操作方法】<br>
+    PC: WASD / 矢印キーで移動｜自機は常に0.1秒間隔で上方向へ自動発射＆スペースキーで即時発射<br>
+    ゲームオーバー後: Rキーで再スタート<br>
+    スマホ: スワイプで移動（※スクロール無効）
   </p>
   
+  <!-- ゲーム画面・スコア・ボタンを内包するコンテナ -->
   <div id="gameContainer">
-    <div id="buttonContainer">
-      <button id="restartButton">もう一度プレイ</button>
-      <button id="nextBossButton" style="display:none;">次のボスへ</button>
+    <div>
+      <button id="nextBossButton" class="gameButton">次のボスへ</button>
+      <button id="restartButton" class="gameButton">もう一度プレイ</button>
     </div>
     <canvas id="gameCanvas"></canvas>
-    <div id="scoreDisplay">Score: 0.00秒 | ボス撃破数: 0</div>
+    <div id="scoreDisplay">Score: 0.00秒　｜　敵撃破数: 0</div>
     <div id="gameOverContainer">
       <h2 id="gameOverText"></h2>
     </div>
   </div>
   
+  <!-- ゲームロジック -->
   <script type="module" src="shooting_Game_Console.js"></script>
 </body>
 </html>
