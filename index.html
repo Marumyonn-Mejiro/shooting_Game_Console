@@ -1,48 +1,44 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>弾除けゲーム - Boss & Sakura Bullet Hell</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>弾除けゲーム - Boss Edition</title>
   <style>
-    /* ヘッダー・操作説明・再スタートボタンは常に上部に表示 */
-    #header {
-      width: 100%;
-      text-align: center;
-      background-color: #222;
-      padding: 5px 0;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 10;
-    }
-    #header h1 {
+    body {
       margin: 0;
-      font-size: 1.8rem;
-      color: pink;
+      padding: 0;
+      background-color: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    #instructions {
-      font-size: 0.9rem;
-      color: #ddd;
+    header {
+      width: 95vw;
+      max-width: 600px;
+      text-align: center;
+      margin: 10px 0;
     }
-    #restartButton {
-      display: none;
-      margin-top: 5px;
-      padding: 5px 10px;
+    header p {
+      margin: 5px 0;
+      font-size: 1rem;
+    }
+    header button {
+      margin: 5px;
+      padding: 8px 16px;
       font-size: 1rem;
       background-color: pink;
       border: none;
       color: black;
       cursor: pointer;
     }
-    /* ゲーム画面コンテナ（ヘッダーの下に配置） */
     #gameContainer {
-      margin-top: 80px; /* ヘッダー分の余白 */
       width: 95vw;
       max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-      text-align: center;
+      position: relative;
     }
     canvas {
       border: 2px solid white;
@@ -51,74 +47,30 @@
       height: auto;
       display: block;
     }
-    #infoDisplay {
-      margin-top: 5px;
-      font-size: 1.1rem;
-      color: #fff;
-    }
-    /* 次のボスへボタン（ボス倒後に表示） */
-    #nextBossContainer {
-      margin-top: 5px;
-      display: none;
-    }
-    #nextBossButton {
-      padding: 5px 10px;
-      font-size: 1rem;
-      background-color: lightgreen;
-      border: none;
-      color: black;
-      cursor: pointer;
-    }
-    /* ゲームオーバー時のメッセージ（キャンバス下部） */
-    #gameOverMessage {
-      font-size: 2rem;
-      color: red;
-      display: none;
-      margin-top: 5px;
-    }
-    /* スマホ用の調整 */
-    @media (max-width: 600px) {
-      #header h1 {
-        font-size: 1.6rem;
-      }
-      #instructions {
-        font-size: 0.8rem;
-      }
-      #restartButton, #nextBossButton {
-        font-size: 0.9rem;
-        padding: 4px 8px;
-      }
-      #infoDisplay {
-        font-size: 1rem;
-      }
+    #scoreDisplay {
+      text-align: center;
+      margin: 5px 0;
+      font-size: 1.2rem;
     }
   </style>
 </head>
 <body>
-  <!-- ヘッダー：タイトル、操作説明、再スタートボタン -->
-  <div id="header">
-    <h1>弾除けゲーム</h1>
-    <div id="instructions">
-      操作方法：PC: WASD/矢印キーで移動、スペースキーで自動発射<br>
-      ゲームオーバー後はスペースキーまたは R キーで再スタート<br>
-      スマホ：スワイプで移動（スクロールは無効）
-    </div>
-    <button id="restartButton">もう一度プレイ</button>
-  </div>
-
-  <!-- ゲーム画面 -->
+  <header>
+    <h1>弾除けゲーム - Boss Edition</h1>
+    <p>
+      操作方法：PCは WASD／矢印キーで移動、スペースキーで発射。<br>
+      スマホはスワイプで移動（スクロールは無効）。<br>
+      ゲームオーバー後はスペースキーまたは Rキーで再スタート。<br>
+      ボス撃破後は「次のボスへ」ボタン（またはスペース／Rキー）で次のボス出現。
+    </p>
+    <button id="restartButton" style="display: none;">もう一度プレイ</button>
+    <button id="nextBossButton" style="display: none;">次のボスへ</button>
+    <p>ボス撃破数：<span id="bossDefeatCountDisplay">0</span> 回</p>
+  </header>
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
-    <div id="infoDisplay">
-      Score: 0.00秒 | Boss倒した数: 0
-    </div>
-    <div id="nextBossContainer">
-      <button id="nextBossButton">次のボスへ</button>
-    </div>
-    <div id="gameOverMessage"></div>
+    <div id="scoreDisplay">Score: 0.00秒</div>
   </div>
-
-  <!-- ゲームロジック -->
   <script type="module" src="shooting_Game_Console.js"></script>
 </body>
 </html>
