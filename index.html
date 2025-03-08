@@ -1,40 +1,45 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>お手軽弾幕ゲーム</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>弾除けゲーム - Boss Edition</title>
   <style>
+    /* 全体レイアウト */
     body {
       margin: 0;
       padding: 0;
+      font-family: Arial, sans-serif;
       background-color: black;
       color: white;
-      font-family: Arial, sans-serif;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    header {
+    /* ヘッダー（操作方法・リスタートボタン・撃破数表示） */
+    #header {
       width: 95vw;
       max-width: 600px;
       text-align: center;
-      margin: 10px 0;
+      padding: 5px 0;
+      background: #111;
+      border-bottom: 1px solid #444;
     }
-    header p {
+    #header p {
       margin: 5px 0;
-      font-size: 1rem;
+      font-size: 0.9rem;
     }
-    header button {
+    #restartButton {
       margin: 5px;
-      padding: 8px 16px;
+      padding: 6px 12px;
       font-size: 1rem;
       background-color: pink;
       border: none;
       color: black;
       cursor: pointer;
     }
+    /* ゲーム画面 */
     #gameContainer {
       width: 95vw;
       max-width: 600px;
@@ -47,30 +52,71 @@
       height: auto;
       display: block;
     }
-    #scoreDisplay {
+    /* スコア＆撃破数表示 */
+    #info {
       text-align: center;
       margin: 5px 0;
+      font-size: 1.1rem;
+    }
+    /* ゲームオーバー時のオーバーレイ */
+    #overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    #overlay h2 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    #nextBossButton {
+      margin-top: 10px;
+      padding: 8px 16px;
       font-size: 1.2rem;
+      background-color: lightgreen;
+      border: none;
+      color: black;
+      cursor: pointer;
+      display: none;
+    }
+    /* スマホ用調整 */
+    @media (max-width: 600px) {
+      #header p { font-size: 0.8rem; }
+      #restartButton { font-size: 0.9rem; padding: 5px 10px; }
+      #info { font-size: 1rem; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>お手軽弾幕ゲーム</h1>
-    <p>
-      操作方法：PCは WASD／矢印キーで移動、スペースキーで発射。<br>
-      スマホはスワイプで移動（スクロールは無効）。<br>
-      ゲームオーバー後はスペースキーまたは Rキーで再スタート。<br>
-      ボス撃破後は「次のボスへ」ボタン（またはスペース／Rキー）で次のボス出現。
-    </p>
-    <button id="restartButton" style="display: none;">もう一度プレイ</button>
-    <button id="nextBossButton" style="display: none;">次のボスへ</button>
-    <p>ボス撃破数：<span id="bossDefeatCountDisplay">0</span> 回</p>
-  </header>
+  <!-- ヘッダー：操作方法・リスタートボタン・ボス撃破数 -->
+  <div id="header">
+    <p>【操作方法】PC: WASD/矢印キーで移動 | 自機は自動発射（0.1秒毎）<br>
+       ゲームオーバー後: スペースキーまたは R キーで再スタート<br>
+       スマホ: スワイプで移動（スクロール無効）</p>
+    <button id="restartButton">Restart Game</button>
+    <p id="bossCountDisplay">Boss Defeated: 0</p>
+  </div>
+  
+  <!-- ゲーム画面 -->
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
-    <div id="scoreDisplay">Score: 0.00秒</div>
+    <div id="info">Score: 0.00秒</div>
+    <!-- オーバーレイ：ゲームオーバー or ボス撃破時 -->
+    <div id="overlay">
+      <h2 id="resultText"></h2>
+      <p id="resultInfo"></p>
+      <p>（スペースキーまたは R キーで再スタート）</p>
+      <button id="nextBossButton">Next Boss</button>
+    </div>
   </div>
+  
   <script type="module" src="shooting_Game_Console.js"></script>
 </body>
 </html>
