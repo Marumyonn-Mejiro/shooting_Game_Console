@@ -17,7 +17,7 @@
       flex-direction: column;
       align-items: center;
     }
-    /* ヘッダー（操作方法・リスタートボタン・撃破数表示） */
+    /* ヘッダー：操作方法・Restart Gameボタン・ボス撃破数 */
     #header {
       width: 95vw;
       max-width: 600px;
@@ -39,6 +39,10 @@
       color: black;
       cursor: pointer;
     }
+    #bossCountDisplay {
+      font-size: 1rem;
+      margin: 5px 0;
+    }
     /* ゲーム画面 */
     #gameContainer {
       width: 95vw;
@@ -52,13 +56,13 @@
       height: auto;
       display: block;
     }
-    /* スコア＆撃破数表示 */
+    /* インフォメーション表示（Score） */
     #info {
       text-align: center;
       margin: 5px 0;
       font-size: 1.1rem;
     }
-    /* ゲームオーバー時のオーバーレイ */
+    /* オーバーレイ：ゲームオーバーまたはボス撃破時 */
     #overlay {
       position: absolute;
       top: 0;
@@ -95,24 +99,24 @@
   </style>
 </head>
 <body>
-  <!-- ヘッダー：操作方法・リスタートボタン・ボス撃破数 -->
   <div id="header">
-    <p>【操作方法】PC: WASD/矢印キーで移動 | 自機は自動発射（0.1秒毎）<br>
-       ゲームオーバー後: スペースキーまたは R キーで再スタート<br>
-       スマホ: スワイプで移動（スクロール無効）</p>
+    <p>
+      【操作方法】<br>
+      PC: WASD/矢印キーで移動 | 自機は自動発射（0.1秒毎）<br>
+      ゲームオーバー後: スペースキーまたは R キーで再スタート<br>
+      スマホ: スワイプで移動（スクロール無効）
+    </p>
     <button id="restartButton">Restart Game</button>
     <p id="bossCountDisplay">Boss Defeated: 0</p>
   </div>
   
-  <!-- ゲーム画面 -->
   <div id="gameContainer">
     <canvas id="gameCanvas"></canvas>
     <div id="info">Score: 0.00秒</div>
-    <!-- オーバーレイ：ゲームオーバー or ボス撃破時 -->
     <div id="overlay">
       <h2 id="resultText"></h2>
       <p id="resultInfo"></p>
-      <p>（スペースキーまたは R キーで再スタート）</p>
+      <p>(スペースキーまたは R キーで再スタート)</p>
       <button id="nextBossButton">Next Boss</button>
     </div>
   </div>
